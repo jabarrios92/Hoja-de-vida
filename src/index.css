@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
+/* Custom transitions and styles */
+.print-shadow {
+  box-shadow: 0 25px 50px -12px rgba(30, 41, 59, 0.12);
+}
+
+/* Print-Media Formatting */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Hide all external interface elements */
+  nav,
+  button,
+  footer,
+  .no-print,
+  .print-hidden,
+  header {
+    display: none !important;
+  }
+
+  /* Reset outer shell formatting */
+  body, 
+  #root, 
+  main {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+  }
+
+  /* Force grid columns inside printed sheets */
+  #cv-print-area {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    page-break-inside: avoid !important;
+  }
+
+  #cv-sidebar {
+    grid-column: span 4 / span 4 !important;
+    background-color: #1e2530 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    padding: 1.5rem !important;
+  }
+
+  #cv-main-body {
+    grid-column: span 8 / span 8 !important;
+    background-color: #ffffff !important;
+    color: #1e293b !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    padding: 1.5rem 2rem !important;
+  }
+
+  /* Ensure standard alignment and margins inside print lists */
+  #skills-section div {
+    border-color: #334155 !important;
+    background-color: #334155 !important;
+    color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .timeline-dot {
+    background-color: #0f9f90 !important;
+    border-color: #0f9f90 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

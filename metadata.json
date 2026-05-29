@@ -1,0 +1,8 @@
+{
+  "name": "Remix: Hoja de Vida - Dr. Jorge Andrés Barrios Durán",
+  "description": "Currículum profesional e interactivo bilingüe (Español/Inglés) con editor en tiempo real y soporte para impresión y descarga en PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
