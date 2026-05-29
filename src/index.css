@@ -19,7 +19,7 @@
 /* Print-Media Formatting */
 @media print {
   @page {
-    size: auto;
+    size: 216mm 330mm;
     margin: 0;
   }
 

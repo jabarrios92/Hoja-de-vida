@@ -492,7 +492,7 @@ export default function App() {
                   ? 'bg-amber-600 text-white border-amber-500 shadow-md hover:bg-amber-550'
                   : 'bg-slate-850 hover:bg-slate-800 text-slate-100 border-slate-800'
               }`}
-              title={lang === 'es' ? 'Simular documento de hoja A4 impresa' : 'Simulate physical printed A4 sheet'}
+              title={lang === 'es' ? 'Simular documento de hoja Oficio impresa' : 'Simulate physical printed Legal sheet'}
             >
               {isPreviewMode ? <EyeOff className="w-3.5 h-3.5 text-amber-200" /> : <Eye className="w-3.5 h-3.5 text-teal-400" />}
               <span>{isPreviewMode ? (lang === 'es' ? 'Cerrar Previa' : 'Close Preview') : (lang === 'es' ? 'Vista Previa PDF' : 'PDF Preview')}</span>
@@ -732,11 +732,11 @@ export default function App() {
               </span>
               <div>
                 <h3 className="text-xs font-bold text-slate-200">
-                  {lang === 'es' ? 'Modo Vista Previa PDF Activo (Acuñado A4)' : 'A4 PDF Print Preview Mode Active'}
+                  {lang === 'es' ? 'Modo Vista Previa PDF Activo (Acuñado Oficio)' : 'Legal PDF Print Preview Mode Active'}
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
                   {lang === 'es' 
-                    ? 'Esta vista replica exactamente el formato de página impreso real (A4). Tip: Elige "Guardar como PDF" y selecciona "Gráficos de fondo" en más opciones.'
+                    ? 'Esta vista replica exactamente el formato de página impreso real (Oficio). Tip: Elige "Guardar como PDF" y selecciona "Gráficos de fondo" en más opciones.'
                     : 'This viewport models the exact paper dimensions and grids. Tip: Choose "Save as PDF" and toggle "Background graphics" in printer options.'}
                 </p>
               </div>

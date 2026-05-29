@@ -1593,8 +1593,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         }}
         className={`mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none border border-slate-200/60 ${
           forcePrintLayout 
-            ? 'grid grid-cols-[30%_70%] !rounded-none shadow-xl border border-slate-200' 
-            : 'grid grid-cols-1 md:grid-cols-[30%_70%]'
+            ? 'grid grid-cols-[32%_68%] !rounded-none shadow-xl border border-slate-200' 
+            : 'grid grid-cols-1 md:grid-cols-[32%_68%]'
         }`}
       >
         {/* LEFT COLUMN: Sidebar (Thematic background) */}
@@ -1618,19 +1618,19 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             >
               {lang === 'es' ? 'Contacto' : 'Contact'}
             </h3>
-            <ul className={`flex flex-col ${gapList} ${tContact}`}>
-              <li className="flex items-start gap-3">
-                <MapPin className="shrink-0 mt-0.5" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} />
+            <ul className={`flex flex-col gap-2.5 text-[10.5px] md:text-[11.5px]`}>
+              <li className="flex items-start gap-2.5">
+                <MapPin className="shrink-0 mt-0.5" style={{ color: tplStyle.sidebarAccent, width: 'calc(0.85rem * var(--section-scale, 1))', height: 'calc(0.85rem * var(--section-scale, 1))' }} />
                 <span>{personalInfo.location}</span>
               </li>
-              <li className="flex items-center gap-3">
-                <Phone className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} />
+              <li className="flex items-center gap-2.5">
+                <Phone className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(0.85rem * var(--section-scale, 1))', height: 'calc(0.85rem * var(--section-scale, 1))' }} />
                 <a href={`tel:${personalInfo.phone}`} className="hover:opacity-85 transition-opacity">
                   {personalInfo.phone}
                 </a>
               </li>
-              <li className="flex items-center gap-3">
-                <Mail className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} aria-label="Mail icon" />
+              <li className="flex items-center gap-2.5">
+                <Mail className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(0.85rem * var(--section-scale, 1))', height: 'calc(0.85rem * var(--section-scale, 1))' }} aria-label="Mail icon" />
                 <a href={`mailto:${personalInfo.email}`} className="hover:opacity-85 transition-opacity break-all">
                   {personalInfo.email}
                 </a>
@@ -1752,7 +1752,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           {/* PROFESSIONAL PROFILE */}
           <EditableSection section="perfil" className="flex flex-col gap-3">
             <div 
-              className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}
+              className={`flex items-center gap-2 border-b border-blue-200/60 pb-2 text-slate-900 font-bold ${tBase}`}
             >
               <div 
                 style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
@@ -1774,7 +1774,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
 
           {/* WORK EXPERIENCE */}
           <EditableSection section="experiencia" className="flex flex-col gap-4">
-            <div className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}>
+            <div className={`flex items-center gap-2 border-b border-blue-200/60 pb-2 text-slate-900 font-bold ${tBase}`}>
               <div 
                 style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
                 className="p-1.5 rounded-lg"
@@ -1862,7 +1862,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
 
           {/* EDUCATION */}
           <EditableSection section="educacion" className="flex flex-col gap-4 mt-2">
-            <div className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}>
+            <div className={`flex items-center gap-2 border-b border-blue-200/60 pb-2 text-slate-900 font-bold ${tBase}`}>
               <div 
                 style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
                 className="p-1.5 rounded-lg"
@@ -1925,6 +1925,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                               className="absolute left-0 top-[6px] w-[3px] h-[3px] rounded-full shrink-0 opacity-50"
                             ></span>
                             <p className={`${tSmall} leading-relaxed italic`}>
+                              <strong className="text-slate-800 font-bold not-italic">{lang === 'es' ? 'Logro' : 'Achievement'}: </strong>
                               {achievement}
                             </p>
                           </div>
