@@ -7,9 +7,19 @@ import { CVData } from './types';
 
 export const INITIAL_CV_DATA: CVData = {
   templateId: 'jorge',
+  pageSize: 'oficio',
   fontFamily: 'Inter',
   spacingMode: 'balanced',
   baseFontSize: 'normal',
+  sectionFontSizes: {
+    personalInfo: 100,
+    perfil: 100,
+    experiencia: 100,
+    educacion: 100,
+    certificaciones: 100,
+    referencias: 100,
+    competencias: 100
+  },
   personalInfo: {
     name: "Dr. Jorge Andrés Barrios Durán",
     titles: {

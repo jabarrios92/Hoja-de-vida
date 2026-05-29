@@ -54,8 +54,36 @@ export interface PhotoEffect {
 export interface CVData {
   fontFamily?: string;
   templateId?: string;
+  pageSize?: 'oficio' | 'a4' | 'letter';
   spacingMode?: 'compact' | 'balanced' | 'spacious';
   baseFontSize?: 'small' | 'normal' | 'large';
+  sectionFontSizes?: {
+    personalInfo?: number;
+    perfil?: number;
+    experiencia?: number;
+    educacion?: number;
+    certificaciones?: number;
+    referencias?: number;
+    competencias?: number;
+  };
+  sectionLineHeight?: {
+    personalInfo?: number;
+    perfil?: number;
+    experiencia?: number;
+    educacion?: number;
+    certificaciones?: number;
+    referencias?: number;
+    competencias?: number;
+  };
+  sectionSpacing?: {
+    personalInfo?: number;
+    perfil?: number;
+    experiencia?: number;
+    educacion?: number;
+    certificaciones?: number;
+    referencias?: number;
+    competencias?: number;
+  };
   personalInfo: {
     name: string;
     titles: TranslationMap;

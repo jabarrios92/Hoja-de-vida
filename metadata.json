@@ -1,6 +1,6 @@
 {
-  "name": "Remix: Hoja de Vida - Dr. Jorge Andrés Barrios Durán",
-  "description": "Currículum profesional e interactivo bilingüe (Español/Inglés) con editor en tiempo real y soporte para impresión y descarga en PDF.",
+  "name": "Editor de Hoja de Vida Profesional",
+  "description": "Herramienta avanzada para crear currículums profesionales con tipografía personalizada, ajuste de tamaños por sección y exportación a PDF (Oficio, A4, Carta).",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

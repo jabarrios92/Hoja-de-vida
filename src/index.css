@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Outfit:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,300&family=Manrope:wght@300;400;500;600;700;800&family=Montserrat:wght@300;400;500;600;700;800&family=Open+Sans:wght@300;400;500;600;700;800&family=Lato:wght@300;400;700;900&family=Poppins:wght@300;400;500;600;700;800&family=Quicksand:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -19,7 +19,7 @@
 /* Print-Media Formatting */
 @media print {
   @page {
-    size: A4 portrait;
+    size: auto;
     margin: 0;
   }
 
@@ -45,20 +45,24 @@
     width: 100% !important;
     max-width: 100% !important;
     min-height: 0 !important;
+    height: auto !important;
   }
 
   /* Force grid columns inside printed sheets */
   #cv-print-area {
     box-shadow: none !important;
     border-radius: 0 !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    height: 100vh !important;
+    height: auto !important;
     min-height: 100vh !important;
     display: grid !important;
     grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+  }
+
+  section, .editable-section {
     page-break-inside: avoid !important;
   }
 
@@ -69,6 +73,7 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     padding: 1.5rem !important;
+    min-height: 100% !important;
   }
 
   #cv-main-body {
@@ -78,6 +83,7 @@
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
     padding: 1.5rem 2rem !important;
+    min-height: 100% !important;
   }
 
   /* Ensure standard alignment and margins inside print lists */

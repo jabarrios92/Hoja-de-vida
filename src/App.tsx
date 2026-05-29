@@ -10,7 +10,28 @@ import CVViewer from './components/CVViewer';
 import CVEditor, { TabType } from './components/CVEditor';
 import TemplateSidebar from './components/TemplateSidebar';
 import UserManualModal from './components/UserManualModal';
-import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff, Save, Download, Upload, ShieldCheck, Layers, HelpCircle, Type } from 'lucide-react';
+import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff, Save, Download, Upload, ShieldCheck, Layers, HelpCircle, Type, ChevronDown, History } from 'lucide-react';
+
+interface HistoryItem {
+  timestamp: number;
+  data: CVData;
+}
+
+// Central font definitions for reuse
+export const FONT_OPTIONS = [
+  { id: 'Outfit', name: 'Gemini (Outfit)', desc: 'Circular y tecnológico', font: '"Outfit", sans-serif' },
+  { id: 'Inter', name: 'Inter', desc: 'Suizo, limpio y moderno', font: '"Inter", sans-serif' },
+  { id: 'Manrope', name: 'Manrope', desc: 'Preciso y contemporáneo', font: '"Manrope", sans-serif' },
+  { id: 'Montserrat', name: 'Montserrat', desc: 'Urbano y equilibrado', font: '"Montserrat", sans-serif' },
+  { id: 'Poppins', name: 'Poppins', desc: 'Dinámico y geométrico', font: '"Poppins", sans-serif' },
+  { id: 'Open Sans', name: 'Open Sans', desc: 'Legibilidad corporativa', font: '"Open Sans", sans-serif' },
+  { id: 'Lato', name: 'Lato', desc: 'Harmonioso y elegante', font: '"Lato", sans-serif' },
+  { id: 'Quicksand', name: 'Quicksand', desc: 'Suave y redondeado', font: '"Quicksand", sans-serif' },
+  { id: 'Roboto', name: 'Roboto', desc: 'Geométrico y adaptable', font: '"Roboto", sans-serif' },
+  { id: 'Playfair Display', name: 'Playfair Display', desc: 'Académico de gran elegancia', font: '"Playfair Display", serif' },
+  { id: 'Lora', name: 'Lora', desc: 'Clásico e intelectual', font: '"Lora", serif' },
+  { id: 'Merriweather', name: 'Merriweather', desc: 'Excelente legibilidad en pantalla', font: '"Merriweather", serif' }
+];
 
 export default function App() {
   // Load initial CV data from localStorage if available, else use baseline data
@@ -52,6 +73,9 @@ export default function App() {
             if (eff.frameWidth === undefined) eff.frameWidth = 4;
             if (!eff.shape) eff.shape = 'circle';
           }
+          if (!parsed.pageSize) {
+            parsed.pageSize = 'oficio';
+          }
           return parsed;
         }
       } catch (e) {
@@ -69,11 +93,60 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [showFloatingFontSelector, setShowFloatingFontSelector] = useState(false);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // Load history from LocalStorage
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('doctor_cv_history');
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Error loading history", e);
+      }
+    }
+  }, []);
+
+  // Function to save a snapshot to history
+  const saveSnapshot = (dataToSave: CVData) => {
+    setHistory((prev) => {
+      // Don't save if it's identical to the latest one
+      if (prev.length > 0 && JSON.stringify(prev[0].data) === JSON.stringify(dataToSave)) {
+        return prev;
+      }
+      
+      const newItem: HistoryItem = {
+        timestamp: Date.now(),
+        data: JSON.parse(JSON.stringify(dataToSave)) // Deep clone
+      };
+      
+      const newHistory = [newItem, ...prev].slice(0, 3);
+      localStorage.setItem('doctor_cv_history', JSON.stringify(newHistory));
+      return newHistory;
+    });
+  };
 
   // Sync state to LocalStorage
   useEffect(() => {
     localStorage.setItem('doctor_cv_data', JSON.stringify(cvData));
   }, [cvData]);
+
+  // Periodic automatic snapshot (every 5 minutes if data changed significantly)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      saveSnapshot(cvData);
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [cvData]);
+
+  // Save snapshot when finishing editing session
+  useEffect(() => {
+    if (!isEditing && !isPreviewMode) {
+      saveSnapshot(cvData);
+    }
+  }, [isEditing]);
 
   // Toast auto-clear
   useEffect(() => {
@@ -110,6 +183,7 @@ export default function App() {
   // Handle data export as a backup JSON file
   const handleExportJSON = () => {
     try {
+      saveSnapshot(cvData); // Save snapshot before export
       const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
         JSON.stringify(cvData, null, 2)
       )}`;
@@ -167,8 +241,19 @@ export default function App() {
 
   // Handle manual trigger showing reassuring toast message
   const handleManualSave = () => {
+    saveSnapshot(cvData);
     localStorage.setItem('doctor_cv_data', JSON.stringify(cvData));
     setToastMessage(lang === 'es' ? '✔ ¡Progreso guardado de forma segura en este navegador!' : '✔ Progress safely saved in this browser!');
+  };
+
+  const restoreHistory = (item: HistoryItem) => {
+    if (window.confirm(lang === 'es' ? '¿Restaurar esta versión guardada?' : 'Restore this saved version?')) {
+      // Save current state to history before restoring another
+      saveSnapshot(cvData);
+      setCvData(item.data);
+      setIsHistoryOpen(false);
+      setToastMessage(lang === 'es' ? '✔ ¡Versión restaurada con éxito!' : '✔ Version successfully restored!');
+    }
   };
 
   // Handle avatar update from photo selector
@@ -251,6 +336,66 @@ export default function App() {
               <span className="font-semibold">{lang === 'es' ? 'English' : 'Español'}</span>
             </button>
 
+            {/* History Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer font-bold ${
+                  isHistoryOpen 
+                    ? 'bg-amber-500 text-slate-950 border-amber-400' 
+                    : 'bg-slate-850 hover:bg-slate-800 text-slate-100 border-slate-800'
+                }`}
+                title={lang === 'es' ? 'Ver historial de versiones' : 'View history of versions'}
+              >
+                <History className={`w-3.5 h-3.5 ${isHistoryOpen ? 'text-slate-950' : 'text-amber-400'}`} />
+                <span>{lang === 'es' ? 'Historial' : 'History'}</span>
+              </button>
+
+              {isHistoryOpen && (
+                <div className="absolute right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 w-72 z-[100] animate-fadeIn">
+                  <div className="px-3 py-1.5 border-b border-slate-850 mb-1 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">{lang === 'es' ? 'Últimos 3 Estados' : 'Last 3 Saved States'}</span>
+                    <span className="text-[9px] text-slate-500 uppercase">{lang === 'es' ? 'Auto-Sesión' : 'Auto-Session'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1 p-1">
+                    {history.length > 0 ? (
+                      history.map((item, idx) => (
+                        <div key={item.timestamp} className="flex flex-col gap-2 p-2.5 rounded-lg bg-slate-850/50 border border-slate-800/60 hover:border-amber-500/30 transition-all">
+                          <div className="flex items-center justify-between">
+                            <div className="flex flex-col">
+                              <span className="text-[11px] font-bold text-slate-200">
+                                {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <span className="text-[9px] text-slate-500">
+                                {new Date(item.timestamp).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => restoreHistory(item)}
+                              className="px-2 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-black rounded-md transition-colors uppercase"
+                            >
+                              {lang === 'es' ? 'Restaurar' : 'Restore'}
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-6 px-4 text-center">
+                        <p className="text-[10px] text-slate-500 italic">{lang === 'es' ? 'Aún no se han capturado versiones automáticamente. Comienza a editar para generar historial.' : 'No automatic versions captured yet. Start editing to generate history.'}</p>
+                      </div>
+                    )}
+                    <div className="mt-1 px-2 pb-1 border-t border-slate-850 pt-2">
+                       <p className="text-[9px] text-slate-500 italic leading-tight">
+                         {lang === 'es' 
+                           ? 'Se guarda un punto de control cada vez que terminas de editar o cada 5 minutos.' 
+                           : 'A checkpoint is saved each time you finish editing or every 5 minutes.'}
+                       </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Minimalist Help/Instrucciones Trigger */}
             <button
               onClick={() => setIsHelpOpen(true)}
@@ -260,6 +405,68 @@ export default function App() {
               <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
               <span className="font-semibold">{lang === 'es' ? 'Ayuda ❓' : 'Help ❓'}</span>
             </button>
+
+            {/* Minimalist Typography Dropdown in Header */}
+            <div className="relative group">
+              <button
+                onClick={() => setShowFloatingFontSelector(!showFloatingFontSelector)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all cursor-pointer font-bold ${
+                  showFloatingFontSelector 
+                    ? 'bg-teal-500 text-slate-950 border-teal-400' 
+                    : 'bg-slate-850 hover:bg-slate-800 text-slate-100 border-slate-800'
+                }`}
+              >
+                <Type className={`w-3.5 h-3.5 ${showFloatingFontSelector ? 'text-slate-950' : 'text-teal-400'}`} />
+                <span>{lang === 'es' ? 'Tipografía' : 'Fonts'}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showFloatingFontSelector ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showFloatingFontSelector && (
+                <div className="absolute right-0 top-full mt-2 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-2 w-64 z-[100] animate-fadeIn">
+                  <div className="px-3 py-1.5 border-b border-slate-850 mb-1">
+                     <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Seleccionar Fuente' : 'Select Font Face'}</span>
+                  </div>
+                  <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                    {FONT_OPTIONS.map((font) => {
+                      const isActive = (cvData.fontFamily || 'Inter') === font.id;
+                      return (
+                        <button
+                          key={font.id}
+                          onClick={() => {
+                            setCvData(prev => ({ ...prev, fontFamily: font.id }));
+                            setToastMessage(lang === 'es' ? `✔ ¡Fuente aplicada: ${font.id}!` : `✔ Font applied: ${font.id}!`);
+                          }}
+                          className={`w-full flex flex-col items-start px-3 py-2 transition-colors hover:bg-slate-850 border-l-2 ${
+                            isActive ? 'bg-slate-850 border-teal-500' : 'border-transparent'
+                          }`}
+                        >
+                          <span style={{ fontFamily: font.font }} className={`text-sm ${isActive ? 'text-teal-400 font-bold' : 'text-slate-200 font-medium'}`}>
+                            {font.id === 'Outfit' ? 'Gemini' : font.name}
+                          </span>
+                          <span className="text-[10px] text-slate-500 line-clamp-1">
+                            {lang === 'es' 
+                              ? font.desc 
+                              : font.id === 'Inter' ? 'Swiss modern style' : 
+                                font.id === 'Roboto' ? 'Geometric & legible' : 
+                                font.id === 'Playfair Display' ? 'Academic & elegant' : 
+                                font.id === 'Lora' ? 'Classic & intellectual' : 
+                                font.id === 'Merriweather' ? 'Robust screen legible' :
+                                font.id === 'Outfit' ? 'Tech-forward geometric' :
+                                font.id === 'Manrope' ? 'Modern sans-serif' :
+                                font.id === 'Montserrat' ? 'Equilibrium & style' :
+                                font.id === 'Poppins' ? 'Dynamic geometric' :
+                                font.id === 'Open Sans' ? 'Corporate legible' :
+                                font.id === 'Lato' ? 'Harmonious & elegant' :
+                                font.id === 'Quicksand' ? 'Soft rounded style' : ''
+                            }
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Print Trigger */}
             <button
@@ -608,7 +815,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* FLOATING MINIMALIST FONT SELECTOR ON THE LEFT (Hidden during printing) */}
+      {/* FLOATING MINIMALIST FONT SELECTOR ON THE LEFT (Hidden during printing) - REMOVED AS IT IS NOW IN THE HEADER */}
       <div className="fixed left-5 top-[40%] -translate-y-1/2 z-40 print:hidden hidden lg:flex flex-col items-start">
         {/* Toggle bubble button */}
         <button
@@ -639,9 +846,11 @@ export default function App() {
             </div>
 
             {[
+              { id: 'Outfit', name: 'Gemini', desc: lang === 'es' ? 'Circular y tecnológico (Inspirado)' : 'Tech-forward geometric' },
               { id: 'Inter', name: 'Inter', desc: lang === 'es' ? 'Suizo, limpio y moderno' : 'Swiss modern style' },
+              { id: 'Manrope', name: 'Manrope', desc: lang === 'es' ? 'Preciso y contemporáneo' : 'Modern sans-serif' },
+              { id: 'Montserrat', name: 'Montserrat', desc: lang === 'es' ? 'Urbano y equilibrado' : 'Equilibrium & style' },
               { id: 'Roboto', name: 'Roboto', desc: lang === 'es' ? 'Geométrico y adaptable' : 'Geometric & legible' },
-              { id: 'Outfit', name: 'Outfit', desc: lang === 'es' ? 'Circular y tecnológico' : 'Tech-forward circle style' },
               { id: 'Playfair Display', name: 'Playfair Display', desc: lang === 'es' ? 'Académico de gran elegancia' : 'Academic & elegant' },
               { id: 'Lora', name: 'Lora', desc: lang === 'es' ? 'Clásico e intelectual' : 'Classic & intellectual' },
               { id: 'Merriweather', name: 'Merriweather', desc: lang === 'es' ? 'Excelente legibilidad en pantalla' : 'Robust screen legible' }
@@ -671,6 +880,8 @@ export default function App() {
                         fontFamily: font.id === 'Inter' ? '"Inter", sans-serif' :
                                     font.id === 'Roboto' ? '"Roboto", sans-serif' :
                                     font.id === 'Outfit' ? '"Outfit", sans-serif' :
+                                    font.id === 'Manrope' ? '"Manrope", sans-serif' :
+                                    font.id === 'Montserrat' ? '"Montserrat", sans-serif' :
                                     font.id === 'Playfair Display' ? '"Playfair Display", serif' :
                                     font.id === 'Lora' ? '"Lora", serif' : '"Merriweather", serif'
                       }}

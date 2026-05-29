@@ -19,10 +19,15 @@ import {
   Quote,
   Pencil,
   Plus,
+  Minus,
+  ChevronUp,
+  ChevronDown,
   Trash2,
   Save,
   X,
-  Check
+  Check,
+  Type,
+  Layers
 } from 'lucide-react';
 import { CVData, Language } from '../types';
 import { getTemplateById } from '../templatesData';
@@ -147,12 +152,34 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
     'Inter': '"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif',
     'Roboto': '"Roboto", ui-sans-serif, system-ui, sans-serif',
     'Outfit': '"Outfit", ui-sans-serif, system-ui, sans-serif',
+    'Gemini': '"Outfit", ui-sans-serif, system-ui, sans-serif',
+    'Manrope': '"Manrope", ui-sans-serif, system-ui, sans-serif',
+    'Montserrat': '"Montserrat", ui-sans-serif, system-ui, sans-serif',
+    'Open Sans': '"Open Sans", ui-sans-serif, system-ui, sans-serif',
+    'Lato': '"Lato", ui-sans-serif, system-ui, sans-serif',
+    'Poppins': '"Poppins", ui-sans-serif, system-ui, sans-serif',
+    'Quicksand': '"Quicksand", ui-sans-serif, system-ui, sans-serif',
     'Playfair Display': '"Playfair Display", Georgia, Cambria, serif',
     'Lora': '"Lora", Georgia, Cambria, serif',
     'Merriweather': '"Merriweather", Georgia, Cambria, serif',
   };
 
   const rootFontFamily = fontStyleMap[preferredFont] || preferredFont;
+
+  // Helper to get page dimensions
+  const getPageDimensions = (size?: string) => {
+    switch (size) {
+      case 'a4':
+        return { width: '210mm', height: '297mm', aspect: '210/297' };
+      case 'letter':
+        return { width: '215.9mm', height: '279.4mm', aspect: '215.9/279.4' };
+      case 'oficio':
+      default:
+        return { width: '216mm', height: '330mm', aspect: '216/330' };
+    }
+  };
+
+  const { width: pageWidth, height: pageHeight, aspect: pageAspect } = getPageDimensions(data.pageSize);
 
   // Spacing & scaling mappings for absolute design precision:
   const spacing = data.spacingMode || 'balanced';
@@ -1362,8 +1389,53 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
   }) => {
     const isInteractive = !forcePrintLayout;
 
+    // Dynamically calculate font size for this specific section
+    const secKey = section === 'personal' ? 'personalInfo' : section;
+    const sectionFontSizePercent = (data.sectionFontSizes as any)?.[secKey] || 100;
+    const sectionLineHeightPercent = (data.sectionLineHeight as any)?.[secKey] || 100;
+    const sectionSpacingPercent = (data.sectionSpacing as any)?.[secKey] || 100;
+    
+    // Convert 100% to line-height 1.5, spacing scale etc.
+    const spacingScale = sectionSpacingPercent / 100;
+    
+    const combinedStyle: any = {
+      ...style,
+      fontSize: sectionFontSizePercent !== 100 ? `${sectionFontSizePercent}%` : undefined,
+      lineHeight: sectionLineHeightPercent !== 100 ? `${1.5 * (sectionLineHeightPercent / 100)}` : undefined,
+      gap: sectionSpacingPercent !== 100 ? `calc(1rem * ${spacingScale})` : undefined,
+      '--section-scale': (sectionFontSizePercent / 100).toString(),
+      '--section-spacing': spacingScale.toString(),
+    };
+
+    const handleAdjustFontSize = (e: React.MouseEvent, delta: number) => {
+      e.stopPropagation();
+      if (!onChange) return;
+      const current = (data.sectionFontSizes as any)?.[secKey] || 100;
+      const next = Math.min(160, Math.max(60, current + delta));
+      const newFontSizes = { ...(data.sectionFontSizes || {}), [secKey]: next };
+      onChange({ ...data, sectionFontSizes: newFontSizes as any });
+    };
+
+    const handleAdjustLineHeight = (e: React.MouseEvent, delta: number) => {
+      e.stopPropagation();
+      if (!onChange) return;
+      const current = (data.sectionLineHeight as any)?.[secKey] || 100;
+      const next = Math.min(180, Math.max(60, current + delta));
+      const newState = { ...(data.sectionLineHeight || {}), [secKey]: next };
+      onChange({ ...data, sectionLineHeight: newState as any });
+    };
+
+    const handleAdjustSpacing = (e: React.MouseEvent, delta: number) => {
+      e.stopPropagation();
+      if (!onChange) return;
+      const current = (data.sectionSpacing as any)?.[secKey] || 100;
+      const next = Math.min(250, Math.max(20, current + delta));
+      const newState = { ...(data.sectionSpacing || {}), [secKey]: next };
+      onChange({ ...data, sectionSpacing: newState as any });
+    };
+
     if (!isInteractive) {
-      return <div style={style} className={className}>{children}</div>;
+      return <div style={combinedStyle} className={className}>{children}</div>;
     }
 
     return (
@@ -1378,22 +1450,53 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             onEditSection(section);
           }
         }}
-        style={style}
-        className={`group relative rounded-xl transition-all duration-200 hover:ring-2 hover:ring-teal-500/40 hover:bg-teal-500/[0.015] p-2 cursor-pointer ${className}`}
+        style={combinedStyle}
+        className={`group/section relative rounded-xl transition-all duration-200 hover:ring-2 hover:ring-teal-500/40 hover:bg-teal-500/[0.015] ${className}`}
         title={lang === 'es' ? "Clic para seleccionar o doble-clic para editar" : "Click to select or double-click to edit"}
       >
-        <button 
-          onClick={(e) => {
-            e.stopPropagation();
-            setLocalEditingSection(section);
-            if (onEditSection) onEditSection(section);
-          }}
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-teal-500 hover:bg-teal-600 text-white rounded-md px-2 py-0.5 text-[9px] font-bold tracking-wide shadow-md cursor-pointer z-[10] flex items-center gap-1 active:scale-95"
-          title={lang === 'es' ? "Editar esta sección" : "Edit this section"}
-        >
-          <Pencil className="w-2.5 h-2.5 stroke-[2.5]" />
-          <span>{lang === 'es' ? 'Editar' : 'Edit'}</span>
-        </button>
+        <div className="absolute top-2 right-2 flex flex-col items-end gap-1.5 opacity-0 group-hover/section:opacity-100 transition-all duration-300 z-[20] pointer-events-auto">
+           
+           <div className="flex bg-slate-900/90 backdrop-blur-sm border border-slate-700/50 rounded-lg overflow-hidden shadow-xl self-stretch divide-x divide-slate-700/50">
+             
+             {/* Font Size */}
+             <div className="flex items-center group/btn relative" title={lang === 'es' ? "Tamaño de letra" : "Font size"}>
+               <button onClick={(e) => handleAdjustFontSize(e, -1)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><Minus className="w-2.5 h-2.5" /></button>
+               <span className="text-[9px] font-bold text-teal-400 font-mono w-[22px] text-center">{(sectionFontSizePercent / 10).toFixed(1)}</span>
+               <button onClick={(e) => handleAdjustFontSize(e, 1)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><Plus className="w-2.5 h-2.5" /></button>
+               <Type className="w-2.5 h-2.5 text-slate-500 absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+             </div>
+
+             {/* Line Height */}
+             <div className="flex items-center group/btn relative" title={lang === 'es' ? "Interlineado" : "Line height"}>
+               <button onClick={(e) => handleAdjustLineHeight(e, -5)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><ChevronDown className="w-2.5 h-2.5" /></button>
+               <span className="text-[9px] font-bold text-amber-400 font-mono w-[22px] text-center">{(sectionLineHeightPercent / 10).toFixed(1)}</span>
+               <button onClick={(e) => handleAdjustLineHeight(e, 5)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><ChevronUp className="w-2.5 h-2.5" /></button>
+               <Layers className="w-2.5 h-2.5 text-slate-500 absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+             </div>
+
+             {/* Spacing (Gap) */}
+             <div className="flex items-center group/btn relative" title={lang === 'es' ? "Espaciado (Gap)" : "Spacing"}>
+               <button onClick={(e) => handleAdjustSpacing(e, -5)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><Minus className="w-2.5 h-2.5" /></button>
+               <span className="text-[9px] font-bold text-indigo-400 font-mono w-[22px] text-center">{(sectionSpacingPercent / 10).toFixed(1)}</span>
+               <button onClick={(e) => handleAdjustSpacing(e, 5)} className="p-1 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"><Plus className="w-2.5 h-2.5" /></button>
+               <span className="text-[7.5px] font-bold text-slate-500 absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover/btn:opacity-100 transition-opacity tracking-widest leading-none">GAP</span>
+             </div>
+
+           </div>
+           
+           <button 
+             onClick={(e) => {
+               e.stopPropagation();
+               setLocalEditingSection(section);
+               if (onEditSection) onEditSection(section);
+             }}
+             className="bg-teal-500 hover:bg-teal-600 text-white rounded-lg px-2 py-1 text-[9px] font-bold tracking-wider shadow-xl cursor-pointer flex items-center gap-1 active:scale-95 transition-all w-fit"
+             title={lang === 'es' ? "Editar contenido" : "Edit content"}
+           >
+             <Pencil className="w-2.5 h-2.5 stroke-[2.5]" />
+             <span>{lang === 'es' ? 'EDITAR' : 'EDIT'}</span>
+           </button>
+        </div>
         {children}
       </div>
     );
@@ -1482,8 +1585,13 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        style={{ fontFamily: rootFontFamily }}
-        className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${
+        style={{ 
+          fontFamily: rootFontFamily,
+          width: pageWidth,
+          minHeight: pageHeight,
+          aspectRatio: pageAspect
+        }}
+        className={`mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none border border-slate-200/60 ${
           forcePrintLayout 
             ? 'grid grid-cols-[30%_70%] !rounded-none shadow-xl border border-slate-200' 
             : 'grid grid-cols-1 md:grid-cols-[30%_70%]'
@@ -1512,17 +1620,17 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             </h3>
             <ul className={`flex flex-col ${gapList} ${tContact}`}>
               <li className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: tplStyle.sidebarAccent }} />
+                <MapPin className="shrink-0 mt-0.5" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} />
                 <span>{personalInfo.location}</span>
               </li>
               <li className="flex items-center gap-3">
-                <Phone className="w-4 h-4 shrink-0" style={{ color: tplStyle.sidebarAccent }} />
+                <Phone className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} />
                 <a href={`tel:${personalInfo.phone}`} className="hover:opacity-85 transition-opacity">
                   {personalInfo.phone}
                 </a>
               </li>
               <li className="flex items-center gap-3">
-                <Mail className="w-4 h-4 shrink-0" style={{ color: tplStyle.sidebarAccent }} aria-label="Mail icon" />
+                <Mail className="shrink-0" style={{ color: tplStyle.sidebarAccent, width: 'calc(1rem * var(--section-scale, 1))', height: 'calc(1rem * var(--section-scale, 1))' }} aria-label="Mail icon" />
                 <a href={`mailto:${personalInfo.email}`} className="hover:opacity-85 transition-opacity break-all">
                   {personalInfo.email}
                 </a>
@@ -1578,26 +1686,26 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           </EditableSection>
 
           {/* REFERENCIAS */}
-          <EditableSection section="referencias" className="flex flex-col gap-4 pt-6 border-t border-slate-700/80">
+          <EditableSection section="referencias" className="flex flex-col gap-4 pt-5 border-t border-slate-700/80">
             <h3 
               style={{ color: tplStyle.sidebarAccent }}
               className={`font-bold tracking-wider ${tBase} uppercase opacity-90`}
             >
               {lang === 'es' ? 'Referencias' : 'References'}
             </h3>
-            <div className={`flex flex-col ${gapList}`}>
+            <div className={`flex flex-col gap-3.5`}>
               {Array.isArray(referencias) && referencias.length > 0 ? (
                 referencias.map((ref) => (
-                  <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-relaxed`}>
-                    <span className={`font-semibold text-slate-300 ${tBody} tracking-wide`}>{ref.name}</span>
+                  <div key={ref.id || Math.random().toString()} className="flex flex-col leading-tight border-l-[1.5px] border-slate-700/40 pl-2">
+                    <span className={`font-bold text-slate-200 text-xs tracking-wide`}>{ref.name}</span>
                     {ref.role && ref.role[lang] && (
-                      <span className="text-slate-450 text-xs font-normal mt-0.5 opacity-80">{ref.role[lang]}</span>
+                      <span className="text-slate-400 text-[10px] mt-0.5">{ref.role[lang]}</span>
                     )}
                     {(ref.institution || ref.phone) && (
-                      <span className="text-slate-455 text-xs font-normal opacity-75 mt-0.5 flex flex-wrap items-center">
+                      <span className="text-slate-500 text-[9.5px] mt-0.5 flex flex-wrap items-center gap-1.5">
                         {ref.institution && <span>{ref.institution}</span>}
-                        {ref.institution && ref.phone && <span className="mx-1.5 opacity-40">|</span>}
-                        {ref.phone && <span className="opacity-80 font-medium text-slate-300">{ref.phone}</span>}
+                        {ref.institution && ref.phone && <span className="text-slate-600/80">•</span>}
+                        {ref.phone && <span className="text-teal-400 font-medium">{ref.phone}</span>}
                       </span>
                     )}
                   </div>
@@ -1654,9 +1762,14 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               </div>
               <h2>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</h2>
             </div>
-            <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
-              <FormattedText text={perfil[lang]} />
-            </p>
+            <div 
+              style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}50` }}
+              className={`border-l-[3px] p-4 rounded-r-2xl shadow-sm`}
+            >
+              <p className={`${tBody} text-slate-950 font-medium leading-relaxed text-justify`}>
+                <FormattedText text={perfil[lang]} />
+              </p>
+            </div>
           </EditableSection>
 
           {/* WORK EXPERIENCE */}
@@ -1732,7 +1845,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
                         className={`border-l-2 ${blockPadding} ${tBody} text-slate-650 rounded-r-md mt-1.5 flex items-start gap-1.5`}
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
+                        <CheckCircle2 className="shrink-0 mt-0.5" style={{ color: tplStyle.primary, width: 'calc(0.875rem * var(--section-scale, 1))', height: 'calc(0.875rem * var(--section-scale, 1))' }} />
                         <p>
                           <strong className="text-slate-950 font-bold">
                             {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro' : 'Achievement')}:
@@ -1759,49 +1872,67 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               <h2>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</h2>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {educacion.map((edu) => (
-                <div
+            <div className={`relative border-l-2 border-slate-200 ml-2.5 pl-5 flex flex-col gap-3.5 mt-2`}>
+              {[...educacion].sort((a, b) => {
+                const getYear = (str: string) => {
+                  if (!str) return 0;
+                  const match = str.match(/\b(20\d{2}|19\d{2})\b/g);
+                  return match ? parseInt(match[match.length - 1], 10) : 0;
+                };
+                return getYear(b.period) - getYear(a.period);
+              }).map((edu) => (
+                <motion.div
                   key={edu.id}
-                  className="p-1 px-1.5 hover:bg-slate-50/40 rounded-lg transition-colors duration-200 flex flex-col gap-1"
+                  variants={itemVariants}
+                  className="relative group/edu"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
-                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-2.5">
-                      <h3 className={`${tBody} font-bold text-slate-900 leading-snug`}>
-                        {edu.degree[lang]}
-                      </h3>
-                      <span className="hidden sm:inline text-slate-300">•</span>
-                      <p className={`${tSecBody} text-slate-500`}>
-                        {edu.institution}
-                      </p>
-                    </div>
-                    <div className="sm:text-right shrink-0">
-                      <span className={`inline-flex items-center gap-1 ${tSecBody} text-slate-400 font-medium`}>
-                        <Calendar className="w-3 h-3 text-slate-400" />
-                        <span>{edu.period}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                    <div className="flex flex-col gap-1 mt-1 pl-1">
-                      {edu.achievements[lang].map((achievement, aIdx) => (
-                        <div
-                          key={aIdx}
-                          className="pl-3 relative text-slate-600 flex items-start"
+                  {/* Connector Dot */}
+                  <span 
+                    style={{ backgroundColor: tplStyle.primary }}
+                    className="absolute -left-[25px] top-[6px] w-[8px] h-[8px] rounded-full ring-4 ring-white shadow-sm transition-transform duration-300 group-hover/edu:scale-125"
+                  ></span>
+                  
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 leading-tight">
+                      <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5">
+                        <h3 className={`${tBody} font-bold text-slate-900 leading-snug`}>
+                          {edu.degree[lang]}
+                        </h3>
+                        <span className="hidden sm:inline text-slate-300 text-xs">•</span>
+                        <p className={`${tSecBody} text-slate-500 font-medium`}>
+                          {edu.institution}
+                        </p>
+                      </div>
+                      <div className="sm:text-right shrink-0 mt-0.5 sm:mt-0">
+                        <span 
+                           style={{ color: tplStyle.primary, backgroundColor: tplStyle.primaryBg }}
+                           className={`inline-block ${tSmall} font-semibold px-2 py-0.5 rounded-md border border-slate-200/60 transition-colors`}
                         >
-                          <span className="absolute left-0 top-[6px] w-1 h-1 rounded-full bg-teal-500 shrink-0"></span>
-                          <p className={`${tSecBody} leading-relaxed`}>
-                            <strong className="text-slate-800 font-semibold">
-                              {lang === 'es' ? 'Logro' : 'Achievement'}:
-                            </strong>{' '}
-                            {achievement}
-                          </p>
-                        </div>
-                      ))}
+                          {edu.period}
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
+
+                    {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
+                      <div className="flex flex-col gap-1 mt-1.5 pl-1 border-l-2 border-transparent">
+                        {edu.achievements[lang].map((achievement, aIdx) => (
+                          <div
+                            key={aIdx}
+                            className="relative text-slate-600 flex items-start pl-3"
+                          >
+                            <span 
+                              style={{ backgroundColor: tplStyle.primary }}
+                              className="absolute left-0 top-[6px] w-[3px] h-[3px] rounded-full shrink-0 opacity-50"
+                            ></span>
+                            <p className={`${tSmall} leading-relaxed italic`}>
+                              {achievement}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
               ))}
             </div>
           </EditableSection>
@@ -1821,8 +1952,13 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        style={{ fontFamily: rootFontFamily }}
-        className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${paddingMainAcademia} flex flex-col ${gapSection} text-slate-800`}
+        style={{ 
+          fontFamily: rootFontFamily,
+          width: pageWidth,
+          minHeight: pageHeight,
+          aspectRatio: pageAspect
+        }}
+        className={`mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none border border-slate-200/60 ${paddingMainAcademia} flex flex-col ${gapSection} text-slate-800`}
       >
         {/* CENTERED HEADER */}
         <EditableSection section="personal" className="flex flex-col items-center text-center pb-6 border-b border-slate-250 gap-4">
@@ -1877,9 +2013,14 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             <Heart className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
             <span>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</span>
           </h3>
-          <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
-            <FormattedText text={perfil[lang]} />
-          </p>
+          <div 
+            style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}30` }}
+            className={`border-l-[3px] p-4 rounded-r-2xl shadow-sm`}
+          >
+            <p className={`${tBody} text-slate-950 font-medium leading-relaxed text-justify`}>
+              <FormattedText text={perfil[lang]} />
+            </p>
+          </div>
         </EditableSection>
 
         {/* TWO SECTION BLOCKS SIDE-BY-SIDE OR GRID */}
@@ -1971,27 +2112,33 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <GraduationCap className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
                 <span>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</span>
               </h3>
-              <div className={`flex flex-col ${gapInsideSection}`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {educacion.map((edu) => (
-                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-150 rounded-xl bg-slate-50/40 flex flex-col gap-1.5`}>
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
-                      <div>
-                        <h4 className={`${tBody} font-bold text-slate-900`}>{edu.degree[lang]}</h4>
-                        <p className={`${tSecBody} text-slate-500`}>{edu.institution}</p>
-                      </div>
-                      <span 
-                        style={{ color: tplStyle.primary }}
-                        className={`${tSecBody} font-bold shrink-0 bg-white px-2 py-0.5 rounded border border-slate-200`}
-                      >
-                        {edu.period}
-                      </span>
+                  <div 
+                    key={edu.id} 
+                    className="p-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl shadow-xs hover:shadow-md transition-all duration-300 flex flex-col gap-2.5 relative group overflow-hidden"
+                  >
+                    <div 
+                      style={{ backgroundColor: tplStyle.primary }}
+                      className="absolute top-0 left-0 w-full h-1 opacity-10 group-hover:opacity-30 transition-opacity"
+                    ></div>
+                    
+                    <div className="flex flex-col gap-1">
+                      <h4 className={`${tSmall} font-bold text-slate-900 leading-tight uppercase tracking-tight`}>{edu.degree[lang]}</h4>
+                      <p className={`${tSecBody} text-slate-500 font-medium`}>{edu.institution}</p>
                     </div>
+
+                    <div className="flex items-center gap-1.5 mt-auto bg-white/60 p-1 rounded-lg border border-slate-100/50 w-fit">
+                      <Calendar className="w-3 h-3 text-slate-400" />
+                      <span className={`${tSmall} font-bold text-slate-500`}>{edu.period}</span>
+                    </div>
+
                     {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                      <div className="flex flex-col gap-1 border-t border-slate-150/60 pt-1.5 mt-1.5">
+                      <div className="flex flex-col gap-1 border-t border-slate-150/60 pt-2 mt-1">
                         {edu.achievements[lang].map((achievement, aIdx) => (
-                          <div key={aIdx} className={`text-[11px] text-slate-655 flex items-start gap-1`}>
-                            <span style={{ color: tplStyle.primary }} className="font-bold shrink-0">•</span>
-                            <p>{achievement}</p>
+                          <div key={aIdx} className={`text-[10px] text-slate-600 flex items-start gap-1`}>
+                            <span style={{ color: tplStyle.primary }} className="font-extrabold shrink-0">•</span>
+                            <p className="italic leading-snug">{achievement}</p>
                           </div>
                         ))}
                       </div>
@@ -2060,17 +2207,18 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
                 <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
               </h3>
-              <div className={`flex flex-col ${gapInsideSection}`}>
+              <div className={`flex flex-col gap-6`}>
                 {Array.isArray(referencias) && referencias.length > 0 ? (
                   referencias.map((ref) => (
-                    <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-normal`}>
-                      <p className="font-bold text-slate-850">{ref.name}</p>
+                    <div key={ref.id || Math.random().toString()} className="flex flex-col leading-snug">
+                      <p className={`font-bold text-slate-900 ${tSecBody}`}>{ref.name}</p>
                       {ref.role && ref.role[lang] && (
-                        <p className={`text-slate-500 ${tSecBody}`}>{ref.role[lang]}</p>
+                        <p className={`text-slate-500 text-[10.5px] mt-0.5`}>{ref.role[lang]}</p>
                       )}
                       {ref.phone && (
-                        <p style={{ color: tplStyle.primary }} className={`font-semibold ${tSecBody} mt-0.5`}>
-                          📞 {ref.phone}
+                        <p style={{ color: tplStyle.primary }} className={`font-bold text-[10.5px] mt-1 flex items-center gap-1.5`}>
+                          <Phone className="w-3 h-3" />
+                          <span>{ref.phone}</span>
                         </p>
                       )}
                     </div>
@@ -2101,8 +2249,13 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        style={{ fontFamily: rootFontFamily }}
-        className="w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] flex flex-col"
+        style={{ 
+          fontFamily: rootFontFamily,
+          width: pageWidth,
+          minHeight: pageHeight,
+          aspectRatio: pageAspect
+        }}
+        className="mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none flex flex-col border border-slate-200/60"
       >
         {/* EXECUTIVE SOLID BANNER HEADER */}
         <EditableSection 
@@ -2170,9 +2323,13 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <Heart className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
                 <span>{lang === 'es' ? 'Perfil Ejecutivo' : 'Executive Profile'}</span>
               </h3>
-              <p className={`${tBody} text-slate-650 leading-relaxed text-justify`}>
-                <FormattedText text={perfil[lang]} />
-              </p>
+              <div 
+                className="p-3.5 rounded-2xl bg-white shadow-sm border border-slate-200/50"
+              >
+                <p className={`${tBody} text-slate-950 font-medium leading-relaxed text-justify`}>
+                  <FormattedText text={perfil[lang]} />
+                </p>
+              </div>
             </EditableSection>
 
             {/* COMPETENCIAS */}
@@ -2229,13 +2386,16 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <Award className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
                 <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
               </h3>
-              <div className={`flex flex-col ${gapInsideSection}`}>
+              <div className={`flex flex-col gap-6`}>
                 {Array.isArray(referencias) && referencias.length > 0 ? (
                   referencias.map((ref) => (
-                    <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-snug`}>
-                      <p className="font-bold text-slate-900">{ref.name}</p>
-                      {ref.role && ref.role[lang] && <p className={`text-slate-600 ${tSecBody}`}>{ref.role[lang]}</p>}
-                      {ref.phone && <p style={{ color: tplStyle.secondary }} className={`font-semibold ${tSecBody} mt-0.5`}>📞 {ref.phone}</p>}
+                    <div key={ref.id || Math.random().toString()} className={`flex flex-col leading-snug`}>
+                      <p className="font-bold text-slate-900 text-xs">{ref.name}</p>
+                      {ref.role && ref.role[lang] && <p className={`text-slate-600 text-[10.5px] mt-0.5`}>{ref.role[lang]}</p>}
+                      {ref.phone && <p style={{ color: tplStyle.secondary }} className={`font-bold text-[10.5px] mt-1.5 flex items-center gap-1`}>
+                         <Phone className="w-2.5 h-2.5" />
+                         <span>{ref.phone}</span>
+                      </p>}
                     </div>
                   ))
                 ) : (
@@ -2331,23 +2491,32 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {educacion.map((edu) => (
-                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-100 rounded-xl bg-slate-50/50 flex flex-col gap-2`}>
+                  <div 
+                    key={edu.id} 
+                    className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-2.5 relative group overflow-hidden"
+                  >
+                    <div 
+                      style={{ backgroundColor: tplStyle.secondary }}
+                      className="absolute top-0 left-0 w-full h-1 opacity-10 group-hover:opacity-40 transition-opacity"
+                    ></div>
+                    
                     <div className="flex flex-col gap-1">
                       <span 
                         style={{ color: tplStyle.secondary, backgroundColor: tplStyle.primaryBg, borderColor: `${tplStyle.secondary}22` }}
-                        className={`${tSmall} font-bold border px-2 py-0.5 rounded-full self-start`}
+                        className={`${tSmall} font-bold border px-2 py-0.5 rounded-full self-start shadow-xs`}
                       >
                         {edu.period}
                       </span>
-                      <h4 className={`${tBody} font-bold text-slate-900 leading-snug mt-1`}>{edu.degree[lang]}</h4>
-                      <p className={`${tSecBody} text-slate-550 font-medium`}>{edu.institution}</p>
+                      <h4 className={`${tBody} font-bold text-slate-900 leading-tight mt-1`}>{edu.degree[lang]}</h4>
+                      <p className={`${tSecBody} text-slate-500 font-medium`}>{edu.institution}</p>
                     </div>
+
                     {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                      <div className="flex flex-col gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                      <div className="flex flex-col gap-1.5 border-t border-slate-100 pt-2.5 mt-1.5">
                         {edu.achievements[lang].map((achievement, aIdx) => (
-                          <div key={aIdx} className={`${tSmall} text-slate-655 flex items-start gap-1`}>
-                            <span style={{ color: tplStyle.secondary }} className="shrink-0">•</span>
-                            <span>{achievement}</span>
+                          <div key={aIdx} className={`${tSmall} text-slate-600 flex items-start gap-1.5`}>
+                            <CheckCircle2 className="w-3 h-3 mt-0.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                            <p className="italic leading-snug font-medium text-slate-600">{achievement}</p>
                           </div>
                         ))}
                       </div>
@@ -2375,8 +2544,13 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        style={{ fontFamily: rootFontFamily }}
-        className="w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] p-6 md:p-10 flex flex-col gap-7 text-slate-800"
+        style={{ 
+          fontFamily: rootFontFamily,
+          width: pageWidth,
+          minHeight: pageHeight,
+          aspectRatio: pageAspect
+        }}
+        className="mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none p-6 md:p-10 flex flex-col gap-7 text-slate-800 border border-slate-200/60"
       >
         {/* ASYMMETRIC CONTEMPORARY TOP HEADER */}
         <EditableSection 
@@ -2450,7 +2624,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               className={`${blockPadding} border-l-4 rounded-r-2xl relative`}
             >
               <Quote className="absolute right-3.5 top-3.5 w-8 h-8 opacity-5" style={{ color: tplStyle.primary }} />
-              <p className={`${tBody} text-slate-600 leading-relaxed text-justify relative z-10 font-semibold`}>
+              <p className={`${tBody} text-slate-950 leading-relaxed text-justify relative z-10 font-semibold`}>
                 <FormattedText text={perfil[lang]} />
               </p>
             </EditableSection>
@@ -2525,24 +2699,32 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <GraduationCap className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
                 <span>{lang === 'es' ? 'Formación & Hitos' : 'Education Highs'}</span>
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {educacion.map((edu) => (
-                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-100 bg-slate-50/30 rounded-xl flex flex-col gap-1.5`}>
+                  <div 
+                    key={edu.id} 
+                    className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex flex-col gap-2 relative group overflow-hidden"
+                  >
+                    <div 
+                      style={{ backgroundColor: tplStyle.primary }}
+                      className="absolute top-0 left-0 w-1 h-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    ></div>
+                    
                     <span 
                       style={{ color: tplStyle.primary, backgroundColor: tplStyle.primaryBg }}
-                      className={`${tSmall} font-bold px-2 py-0.5 rounded-full inline-block self-start`}
+                      className={`${tSmall} font-bold px-2.5 py-0.5 rounded-lg inline-block self-start`}
                     >
                       {edu.period}
                     </span>
-                    <h4 className={`${tBody} font-bold text-slate-900 leading-snug`}>{edu.degree[lang]}</h4>
-                    <p className={`${tSecBody} text-slate-500 font-semibold`}>{edu.institution}</p>
+                    <h4 className={`${tBody} font-black text-slate-900 leading-tight mt-0.5`}>{edu.degree[lang]}</h4>
+                    <p className={`${tSecBody} text-slate-600 font-bold`}>{edu.institution}</p>
                     
                     {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                      <div className="flex flex-col gap-1 border-t border-slate-150/60 pt-1.5 mt-1.5">
+                      <div className="flex flex-col gap-1.5 border-t border-slate-100/50 pt-2.5 mt-1">
                         {edu.achievements[lang].map((achievement, aIdx) => (
-                          <div key={aIdx} className={`${tSmall} text-slate-600 flex items-start gap-1`}>
-                            <span style={{ color: tplStyle.primary }} className="font-bold shrink-0">•</span>
-                            <p className="leading-snug">{achievement}</p>
+                          <div key={aIdx} className={`text-[10px] text-slate-600 flex items-start gap-1`}>
+                            <div style={{ backgroundColor: tplStyle.primary }} className="w-1 h-1 rounded-full mt-1.5 shrink-0 opacity-60"></div>
+                            <p className="leading-relaxed font-medium italic">{achievement}</p>
                           </div>
                         ))}
                       </div>
@@ -2551,7 +2733,6 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 ))}
               </div>
             </EditableSection>
-
           </div>
 
           {/* DYNAMIC COMPETENCIES + CERTIFICATIONS + REFERENCES BAR */}
@@ -2602,13 +2783,16 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
                 <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
               </h3>
-              <div className={`flex flex-col ${gapInsideSection}`}>
+              <div className={`flex flex-col gap-5`}>
                 {Array.isArray(referencias) && referencias.length > 0 ? (
                   referencias.map((ref) => (
-                    <div key={ref.id || Math.random().toString()} className={`${tBody} leading-relaxed`}>
-                      <p className="font-extrabold text-slate-900 text-[12px]">{ref.name}</p>
-                      {ref.role && ref.role[lang] && <p className={`text-slate-650 ${tSecBody}`}>{ref.role[lang]}</p>}
-                      {ref.phone && <p style={{ color: tplStyle.primary }} className={`font-bold ${tSecBody} mt-0.5`}>📞 {ref.phone}</p>}
+                    <div key={ref.id || Math.random().toString()} className="flex flex-col leading-snug">
+                      <p className="font-black text-slate-900 text-[11px] uppercase tracking-tighter">{ref.name}</p>
+                      {ref.role && ref.role[lang] && <p className={`text-slate-600 text-[10px] mt-0.5 opacity-80 font-medium`}>{ref.role[lang]}</p>}
+                      {ref.phone && <p style={{ color: tplStyle.primary }} className={`font-bold text-[10px] mt-1.5 flex items-center gap-1`}> 
+                        <Phone className="w-2.5 h-2.5" /> 
+                        <span>{ref.phone}</span>
+                      </p>}
                     </div>
                   ))
                 ) : (
