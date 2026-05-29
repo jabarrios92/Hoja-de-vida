@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { CVData, Language } from '../types';
 import { getTemplateById } from '../templatesData';
+import { RichInput, RichTextarea, FormattedText } from './RichInput';
 
 interface CVViewerProps {
   data: CVData;
@@ -64,20 +65,20 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
   const shape = effect.shape || 'circle';
 
   let shapeBorderRadius = '9999px'; // Default circle
-  let shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+  let shapeClass = 'w-[165px] h-[165px] md:w-[184px] md:h-[184px] aspect-square';
 
   if (shape === 'oval') {
     shapeBorderRadius = '50%'; 
-    shapeClass = 'w-32 h-40 md:w-36 md:h-44';
+    shapeClass = 'w-[147px] h-[184px] md:w-[165px] md:h-[202px]';
   } else if (shape === 'square') {
     shapeBorderRadius = '0px';
-    shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+    shapeClass = 'w-[165px] h-[165px] md:w-[184px] md:h-[184px] aspect-square';
   } else if (shape === 'rounded-square') {
     shapeBorderRadius = '24px';
-    shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+    shapeClass = 'w-[165px] h-[165px] md:w-[184px] md:h-[184px] aspect-square';
   } else if (shape === 'rectangular') {
     shapeBorderRadius = '16px';
-    shapeClass = 'w-32 h-40 md:w-36 md:h-44';
+    shapeClass = 'w-[147px] h-[184px] md:w-[165px] md:h-[202px]';
   }
 
   let glowStyle: React.CSSProperties = {};
@@ -158,19 +159,19 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
   const size = data.baseFontSize || 'normal';
 
   // 1. Spacing helper maps
-  const gapSidebar = spacing === 'compact' ? 'gap-5' : spacing === 'spacious' ? 'gap-12' : 'gap-9';
-  const gapSection = spacing === 'compact' ? 'gap-5' : spacing === 'spacious' ? 'gap-11' : 'gap-8.5';
-  const gapInsideSection = spacing === 'compact' ? 'gap-4' : spacing === 'spacious' ? 'gap-10' : 'gap-7';
-  const gapList = spacing === 'compact' ? 'gap-1.5' : spacing === 'spacious' ? 'gap-3.5' : 'gap-2';
-  const gapGroup = spacing === 'compact' ? 'gap-2.5' : spacing === 'spacious' ? 'gap-5' : 'gap-3.5';
-  const gapSubItem = spacing === 'compact' ? 'gap-1' : spacing === 'spacious' ? 'gap-2.5' : 'gap-1.5';
-  const paddingMain = spacing === 'compact' ? 'p-6 md:p-8' : spacing === 'spacious' ? 'p-12 md:p-14' : 'p-8 md:p-11';
-  const paddingMainAcademia = spacing === 'compact' ? 'p-6 md:p-8' : spacing === 'spacious' ? 'p-12 md:p-16' : 'p-8 md:p-14';
-  const paddingSidebar = spacing === 'compact' ? 'p-5 md:p-6' : spacing === 'spacious' ? 'p-10 md:p-11' : 'p-8';
-  const paddingGrid = spacing === 'compact' ? 'p-3' : spacing === 'spacious' ? 'p-6' : 'p-4.5';
-  const blockPadding = spacing === 'compact' ? 'p-2.5' : spacing === 'spacious' ? 'p-4.5' : 'p-3.5';
-  const blockPaddingEdu = spacing === 'compact' ? 'p-2.5' : spacing === 'spacious' ? 'p-4.5' : 'p-4';
-  const mbItem = spacing === 'compact' ? 'mb-1' : spacing === 'spacious' ? 'mb-4' : 'mb-2';
+  const gapSidebar = spacing === 'compact' ? 'gap-4' : spacing === 'spacious' ? 'gap-10' : 'gap-7';
+  const gapSection = spacing === 'compact' ? 'gap-4' : spacing === 'spacious' ? 'gap-9.5' : 'gap-6.5';
+  const gapInsideSection = spacing === 'compact' ? 'gap-3' : spacing === 'spacious' ? 'gap-8' : 'gap-5';
+  const gapList = spacing === 'compact' ? 'gap-1' : spacing === 'spacious' ? 'gap-3' : 'gap-1.5';
+  const gapGroup = spacing === 'compact' ? 'gap-2' : spacing === 'spacious' ? 'gap-4' : 'gap-2.5';
+  const gapSubItem = spacing === 'compact' ? 'gap-0.5' : spacing === 'spacious' ? 'gap-2' : 'gap-1';
+  const paddingMain = spacing === 'compact' ? 'p-[18px] md:p-6' : spacing === 'spacious' ? 'p-10 md:p-12' : 'p-6.5 md:p-[28px]';
+  const paddingMainAcademia = spacing === 'compact' ? 'p-[18px] md:p-6' : spacing === 'spacious' ? 'p-10 md:p-14' : 'p-6.5 md:p-[32px]';
+  const paddingSidebar = spacing === 'compact' ? 'p-4 md:p-[18px]' : spacing === 'spacious' ? 'p-8.5 md:p-[34px]' : 'p-5 md:p-6';
+  const paddingGrid = spacing === 'compact' ? 'p-2.5' : spacing === 'spacious' ? 'p-5.5' : 'p-4';
+  const blockPadding = spacing === 'compact' ? 'p-2' : spacing === 'spacious' ? 'p-4' : 'p-3';
+  const blockPaddingEdu = spacing === 'compact' ? 'p-2' : spacing === 'spacious' ? 'p-4' : 'p-3.5';
+  const mbItem = spacing === 'compact' ? 'mb-0.5' : spacing === 'spacious' ? 'mb-3.5' : 'mb-1.5';
   
   // 2. Font sizing classes mapped dynamically for perfect "distribución de textos"
   const tBase = size === 'small' ? 'text-xs md:text-sm' : size === 'large' ? 'text-base' : 'text-sm';
@@ -182,6 +183,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
   // Titles & Headings
   const hName = size === 'small' ? 'text-2xl md:text-3xl' : size === 'large' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl';
   const hTitles = size === 'small' ? 'text-[10px] md:text-xs tracking-widest' : size === 'large' ? 'text-sm md:text-base tracking-widest' : 'text-xs md:text-sm tracking-widest';
+  const hTitlesJorge = size === 'small' ? 'text-[11.5px] md:text-[13.8px]' : size === 'large' ? 'text-[16px] md:text-[18.4px]' : 'text-[13.8px] md:text-[16px]';
   const hSection = size === 'small' ? 'text-xs font-bold uppercase tracking-widest' : size === 'large' ? 'text-base font-extrabold uppercase tracking-widest' : 'text-sm font-bold uppercase tracking-widest';
   const hBadge = size === 'small' ? 'text-[9.5px]' : size === 'large' ? 'text-xs' : 'text-[11px]';
   const hRole = size === 'small' ? 'text-xs font-bold' : size === 'large' ? 'text-sm font-bold' : 'text-xs font-bold';
@@ -196,14 +198,17 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
   const [draftLocation, setDraftLocation] = React.useState('');
   const [draftPhone, setDraftPhone] = React.useState('');
   const [draftEmail, setDraftEmail] = React.useState('');
+  const [draftRegistroMedico, setDraftRegistroMedico] = React.useState('');
 
   // 2. Perfil draft states
   const [draftPerfilEs, setDraftPerfilEs] = React.useState('');
   const [draftPerfilEn, setDraftPerfilEn] = React.useState('');
 
   // 3. Competencias draft states
-  const [draftCompEs, setDraftCompEs] = React.useState('');
-  const [draftCompEn, setDraftCompEn] = React.useState('');
+  const [draftCompEs, setDraftCompEs] = React.useState<string[]>([]);
+  const [draftCompEn, setDraftCompEn] = React.useState<string[]>([]);
+  const [newCompEs, setNewCompEs] = React.useState('');
+  const [newCompEn, setNewCompEn] = React.useState('');
 
   // 4. Certificaciones draft state
   const [draftCerts, setDraftCerts] = React.useState<any[]>([]);
@@ -227,12 +232,15 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         setDraftLocation(personalInfo.location || '');
         setDraftPhone(personalInfo.phone || '');
         setDraftEmail(personalInfo.email || '');
+        setDraftRegistroMedico(personalInfo.registroMedico || '');
       } else if (localEditingSection === 'perfil') {
         setDraftPerfilEs(perfil?.es || '');
         setDraftPerfilEn(perfil?.en || '');
       } else if (localEditingSection === 'competencias') {
-        setDraftCompEs(competencias?.es?.join(', ') || '');
-        setDraftCompEn(competencias?.en?.join(', ') || '');
+        setDraftCompEs(competencias?.es || []);
+        setDraftCompEn(competencias?.en || []);
+        setNewCompEs('');
+        setNewCompEn('');
       } else if (localEditingSection === 'certificaciones') {
         setDraftCerts(JSON.parse(JSON.stringify(certificaciones || [])));
       } else if (localEditingSection === 'referencias') {
@@ -398,6 +406,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         location: draftLocation,
         phone: draftPhone,
         email: draftEmail,
+        registroMedico: draftRegistroMedico,
       };
     } else if (localEditingSection === 'perfil') {
       updatedData.perfil = {
@@ -405,13 +414,9 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         en: draftPerfilEn,
       };
     } else if (localEditingSection === 'competencias') {
-      const splitAndTrim = (str: string) => 
-        str.split(',')
-           .map(s => s.trim())
-           .filter(Boolean);
       updatedData.competencias = {
-        es: splitAndTrim(draftCompEs),
-        en: splitAndTrim(draftCompEn),
+        es: draftCompEs.map(s => s.trim()).filter(Boolean),
+        en: draftCompEn.map(s => s.trim()).filter(Boolean),
       };
     } else if (localEditingSection === 'certificaciones') {
       updatedData.certificaciones = draftCerts;
@@ -504,6 +509,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Nombre Completo' : 'Full Name'}</label>
                   <input 
                     type="text" 
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
                     value={draftName} 
                     onChange={(e) => setDraftName(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all font-medium" 
@@ -513,6 +520,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Ubicación' : 'Location'}</label>
                   <input 
                     type="text" 
+                    onFocus={(e) => e.target.select()}
                     value={draftLocation} 
                     onChange={(e) => setDraftLocation(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
@@ -522,6 +530,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Teléfono' : 'Phone'}</label>
                   <input 
                     type="text" 
+                    onFocus={(e) => e.target.select()}
                     value={draftPhone} 
                     onChange={(e) => setDraftPhone(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
@@ -531,6 +540,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Correo Electrónico' : 'Email Address'}</label>
                   <input 
                     type="text" 
+                    onFocus={(e) => e.target.select()}
                     value={draftEmail} 
                     onChange={(e) => setDraftEmail(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
@@ -540,6 +550,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Título Profesional (Español)' : 'Professional Title (Spanish)'}</label>
                   <input 
                     type="text" 
+                    onFocus={(e) => e.target.select()}
                     value={draftTitleEs} 
                     onChange={(e) => setDraftTitleEs(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
@@ -549,58 +560,206 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Título Profesional (Inglés)' : 'Professional Title (English)'}</label>
                   <input 
                     type="text" 
+                    onFocus={(e) => e.target.select()}
                     value={draftTitleEn} 
                     onChange={(e) => setDraftTitleEn(e.target.value)} 
                     className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col sm:col-span-2">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">
+                    {lang === 'es' ? 'Registro Médico (RM)' : 'Medical Registration (RM)'}
+                  </label>
+                  <input 
+                    type="text" 
+                    onFocus={(e) => e.target.select()}
+                    value={draftRegistroMedico} 
+                    onChange={(e) => setDraftRegistroMedico(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all font-medium" 
+                    placeholder={lang === 'es' ? 'ej. 1140884814 o N/A' : 'e.g. 1140884814 or N/A'}
                   />
                 </div>
               </div>
             )}
 
             {localEditingSection === 'perfil' && (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Español)' : 'Professional Summary (Spanish)'}</label>
-                  <textarea 
+              <div className="flex flex-col gap-4 bg-slate-900/40 p-1.5 rounded-2xl border border-slate-800/45">
+                <div className="flex flex-col relative">
+                  <label className="text-xs font-bold text-slate-300 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Español)' : 'Professional Summary (Spanish)'}</label>
+                  <RichTextarea 
                     rows={5} 
+                    autoFocus
+                    onFocus={(e) => e.target.select()}
                     value={draftPerfilEs} 
                     onChange={(e) => setDraftPerfilEs(e.target.value)} 
-                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-150 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
                   />
+                  <div className="text-[10px] text-slate-500 mt-1 pl-1">
+                    {lang === 'es' ? '💡 Consejo: Selecciona texto para aplicar negrita, cursiva, subrayado o tachado.' : '💡 Pro tip: Select text to apply bold, italic, underline, or strikethrough.'}
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Inglés)' : 'Professional Summary (English)'}</label>
-                  <textarea 
+                <div className="flex flex-col relative mt-2">
+                  <label className="text-xs font-bold text-slate-300 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Inglés)' : 'Professional Summary (English)'}</label>
+                  <RichTextarea 
                     rows={5} 
+                    onFocus={(e) => e.target.select()}
                     value={draftPerfilEn} 
                     onChange={(e) => setDraftPerfilEn(e.target.value)} 
-                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-150 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
                   />
+                  <div className="text-[10px] text-slate-500 mt-1 pl-1">
+                    {lang === 'es' ? '💡 Consejo: Selecciona texto para formatear.' : '💡 Pro tip: Select text to format.'}
+                  </div>
                 </div>
               </div>
             )}
 
             {localEditingSection === 'competencias' && (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Competencias en Español (separadas por coma)' : 'Skills in Spanish (comma separated)'}</label>
-                  <textarea 
-                    rows={3} 
-                    value={draftCompEs} 
-                    onChange={(e) => setDraftCompEs(e.target.value)} 
-                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
-                    placeholder="ej. Diagnóstico Clínico, Medicina Preventiva, Liderazgo"
-                  />
+              <div className="flex flex-col gap-6 font-sans">
+                {/* Competencies in Spanish */}
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-bold text-slate-400">
+                    {lang === 'es' ? 'Competencias en Español (uno por uno)' : 'Skills in Spanish (one by one)'}
+                  </label>
+                  
+                  {/* Current Spanish list */}
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {draftCompEs.map((comp, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          onFocus={(e) => e.target.select()}
+                          value={comp}
+                          onChange={(e) => {
+                            const updated = [...draftCompEs];
+                            updated[idx] = e.target.value;
+                            setDraftCompEs(updated);
+                          }}
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all flex-1"
+                          placeholder={lang === 'es' ? 'Nombre de la competencia' : 'Skill name'}
+                        />
+                        <button
+                          onClick={() => {
+                            setDraftCompEs(draftCompEs.filter((_, i) => i !== idx));
+                          }}
+                          className="p-2 bg-red-950/40 hover:bg-red-900/60 border border-red-900/30 text-red-400 rounded-xl transition-all cursor-pointer"
+                          title={lang === 'es' ? 'Eliminar competencia' : 'Remove skill'}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {draftCompEs.length === 0 && (
+                      <div className="text-xs text-slate-500 italic py-1 pl-1">
+                        {lang === 'es' ? 'No hay competencias agregadas todavía.' : 'No skills added yet.'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add competency row */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={newCompEs}
+                      onChange={(e) => setNewCompEs(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newCompEs.trim()) {
+                            setDraftCompEs([...draftCompEs, newCompEs.trim()]);
+                            setNewCompEs('');
+                          }
+                        }
+                      }}
+                      className="bg-slate-900 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all flex-1"
+                      placeholder={lang === 'es' ? 'Agregar nueva competencia...' : 'Add new skill...'}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newCompEs.trim()) {
+                          setDraftCompEs([...draftCompEs, newCompEs.trim()]);
+                          setNewCompEs('');
+                        }
+                      }}
+                      className="py-1.5 px-3.5 bg-teal-600 hover:bg-teal-500 text-xs font-bold text-white rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-md h-[38px] shrink-0"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>{lang === 'es' ? 'Agregar' : 'Add'}</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Competencias en Inglés (separadas por coma)' : 'Skills in English (comma separated)'}</label>
-                  <textarea 
-                    rows={3} 
-                    value={draftCompEn} 
-                    onChange={(e) => setDraftCompEn(e.target.value)} 
-                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
-                    placeholder="e.g. Clinical Diagnosis, Preventive Medicine, Leadership"
-                  />
+
+                {/* Competencies in English */}
+                <div className="flex flex-col gap-2 border-t border-slate-800/40 pt-4">
+                  <label className="text-xs font-bold text-slate-400">
+                    {lang === 'es' ? 'Competencias en Inglés (uno por uno)' : 'Skills in English (one by one)'}
+                  </label>
+                  
+                  {/* Current English list */}
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {draftCompEn.map((comp, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <input
+                          type="text"
+                          onFocus={(e) => e.target.select()}
+                          value={comp}
+                          onChange={(e) => {
+                            const updated = [...draftCompEn];
+                            updated[idx] = e.target.value;
+                            setDraftCompEn(updated);
+                          }}
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all flex-1"
+                          placeholder={lang === 'es' ? 'Nombre de la competencia' : 'Skill name'}
+                        />
+                        <button
+                          onClick={() => {
+                            setDraftCompEn(draftCompEn.filter((_, i) => i !== idx));
+                          }}
+                          className="p-2 bg-red-950/40 hover:bg-red-900/60 border border-red-900/30 text-red-400 rounded-xl transition-all cursor-pointer"
+                          title={lang === 'es' ? 'Eliminar competencia' : 'Remove skill'}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {draftCompEn.length === 0 && (
+                      <div className="text-xs text-slate-500 italic py-1 pl-1">
+                        {lang === 'es' ? 'No hay competencias agregadas todavía.' : 'No skills added yet.'}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add competency row */}
+                  <div className="flex items-center gap-2 mt-1">
+                    <input
+                      type="text"
+                      value={newCompEn}
+                      onChange={(e) => setNewCompEn(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (newCompEn.trim()) {
+                            setDraftCompEn([...draftCompEn, newCompEn.trim()]);
+                            setNewCompEn('');
+                          }
+                        }
+                      }}
+                      className="bg-slate-900 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-1.5 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all flex-1"
+                      placeholder={lang === 'es' ? 'Agregar nueva competencia...' : 'Add new skill...'}
+                    />
+                    <button
+                      onClick={() => {
+                        if (newCompEn.trim()) {
+                          setDraftCompEn([...draftCompEn, newCompEn.trim()]);
+                          setNewCompEn('');
+                        }
+                      }}
+                      className="py-1.5 px-3.5 bg-teal-600 hover:bg-teal-500 text-xs font-bold text-white rounded-xl transition-all cursor-pointer flex items-center gap-1 shadow-md h-[38px] shrink-0"
+                    >
+                      <Plus className="w-4 h-4 stroke-[2.5]" />
+                      <span>{lang === 'es' ? 'Agregar' : 'Add'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -810,7 +969,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Responsabilidades Clínicas - Viñetas (ES)' : 'Clinical Responsibilities - Bullets (ES)'}</span>
                       {(exp.details?.es || []).map((det: string, dIdx: number) => (
                         <div key={dIdx} className="flex items-center gap-2">
-                          <input 
+                          <RichInput 
                             type="text" 
                             value={det} 
                             onChange={(e) => {
@@ -871,7 +1030,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Responsabilidades Clínicas - Viñetas (EN)' : 'Clinical Responsibilities - Bullets (EN)'}</span>
                       {(exp.details?.en || []).map((det: string, dIdx: number) => (
                         <div key={dIdx} className="flex items-center gap-2">
-                          <input 
+                          <RichInput 
                             type="text" 
                             value={det} 
                             onChange={(e) => {
@@ -931,7 +1090,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pb-1 border-t border-slate-800 pt-3 text-left">
                       <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Título del Logro (ES - ej. Logro como Fundador)' : 'Achievement Label (ES - e.g. Achievement as Founder)'}</label>
-                        <input 
+                        <RichInput 
                           type="text" 
                           value={exp.achievementLabel?.es || ''} 
                           onChange={(e) => handleExpChange(index, 'achievementLabel', e.target.value, 'es')} 
@@ -941,7 +1100,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       </div>
                       <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Título del Logro (EN)' : 'Achievement Label (EN)'}</label>
-                        <input 
+                        <RichInput 
                           type="text" 
                           value={exp.achievementLabel?.en || ''} 
                           onChange={(e) => handleExpChange(index, 'achievementLabel', e.target.value, 'en')} 
@@ -951,7 +1110,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       </div>
                       <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Logro Destacado (ES - Opcional)' : 'Featured Achievement (ES - Optional)'}</label>
-                        <input 
+                        <RichInput 
                           type="text" 
                           value={exp.achievement?.es || ''} 
                           onChange={(e) => handleExpChange(index, 'achievement', e.target.value, 'es')} 
@@ -960,7 +1119,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       </div>
                       <div className="flex flex-col">
                         <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Logro Destacado (EN - Opcional)' : 'Featured Achievement (EN - Optional)'}</label>
-                        <input 
+                        <RichInput 
                           type="text" 
                           value={exp.achievement?.en || ''} 
                           onChange={(e) => handleExpChange(index, 'achievement', e.target.value, 'en')} 
@@ -1212,15 +1371,29 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         onDoubleClick={(e) => {
           e.stopPropagation();
           setLocalEditingSection(section);
+          if (onEditSection) onEditSection(section);
+        }}
+        onClick={(e) => {
+          if (onEditSection) {
+            onEditSection(section);
+          }
         }}
         style={style}
         className={`group relative rounded-xl transition-all duration-200 hover:ring-2 hover:ring-teal-500/40 hover:bg-teal-500/[0.015] p-2 cursor-pointer ${className}`}
-        title="Doble-clic para modificar o editar el texto de esta sección"
+        title={lang === 'es' ? "Clic para seleccionar o doble-clic para editar" : "Click to select or double-click to edit"}
       >
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-teal-500 text-white rounded-md px-2 py-0.5 text-[9px] font-bold tracking-wide shadow-md pointer-events-none z-[10] flex items-center gap-1">
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            setLocalEditingSection(section);
+            if (onEditSection) onEditSection(section);
+          }}
+          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-teal-500 hover:bg-teal-600 text-white rounded-md px-2 py-0.5 text-[9px] font-bold tracking-wide shadow-md cursor-pointer z-[10] flex items-center gap-1 active:scale-95"
+          title={lang === 'es' ? "Editar esta sección" : "Edit this section"}
+        >
           <Pencil className="w-2.5 h-2.5 stroke-[2.5]" />
-          <span>Doble-clic para editar</span>
-        </div>
+          <span>{lang === 'es' ? 'Editar' : 'Edit'}</span>
+        </button>
         {children}
       </div>
     );
@@ -1320,12 +1493,16 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         <div 
           id="cv-sidebar" 
           style={{ backgroundColor: tplStyle.sidebarBg, color: tplStyle.sidebarText }}
-          className={`${paddingSidebar} flex flex-col ${gapSidebar} print:col-span-4 ${
-            forcePrintLayout ? 'col-span-4' : 'md:col-span-4'
+          className={`${paddingSidebar} flex flex-col ${gapSidebar} print:col-span-3 ${
+            forcePrintLayout ? 'col-span-3' : 'md:col-span-3'
           }`}
         >
-          {/* Avatar rendering from shared helper */}
-          {renderAvatar()}
+          {/* Avatar rendering from shared helper with 10% size boost */}
+          {renderAvatar(
+            shape === 'oval' || shape === 'rectangular'
+              ? 'w-[162px] h-[202px] md:w-[182px] md:h-[222px]'
+              : 'w-[182px] h-[182px] md:w-[202px] md:h-[202px] aspect-square'
+          )}
 
           {/* CONTACT INFO */}
           <EditableSection section="personal" className="flex flex-col gap-4">
@@ -1363,21 +1540,14 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             >
               {lang === 'es' ? 'Competencias' : 'Skills & Focus'}
             </h3>
-            <div className="flex flex-col gap-2">
+            <div className={`flex flex-col ${gapList}`}>
               {competencias[lang]?.map((comp, idx) => (
                 <div
                   key={idx}
-                  style={{
-                    borderLeftColor: tplStyle.sidebarAccent,
-                    backgroundColor: tplStyle.badgeBg,
-                    borderColor: `${tplStyle.sidebarAccent}12`
-                  }}
-                  className="group flex items-center border-l-2 rounded-r-lg rounded-l-xs border-y border-r px-3 py-2.5 transition-all duration-200 hover:translate-x-1 cursor-default"
+                  style={{ borderColor: `${tplStyle.sidebarAccent}aa` }}
+                  className={`flex flex-col ${tBody} leading-relaxed border-l-2 pl-3 py-0.5`}
                 >
-                  <span 
-                    style={{ color: tplStyle.sidebarText }} 
-                    className={`font-medium tracking-wide ${hBadge} leading-tight text-left`}
-                  >
+                  <span className="font-semibold" style={{ color: tplStyle.sidebarText }}>
                     {comp}
                   </span>
                 </div>
@@ -1421,7 +1591,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               {Array.isArray(referencias) && referencias.length > 0 ? (
                 referencias.map((ref) => (
                   <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-relaxed`}>
-                    <span className={`font-bold text-white ${tBase} tracking-wide`}>{ref.name}</span>
+                    <span className={`font-bold text-white ${tBody} tracking-wide`}>{ref.name}</span>
                     {ref.role && ref.role[lang] && (
                       <span className="text-slate-200 font-medium mt-0.5">{ref.role[lang]}</span>
                     )}
@@ -1446,8 +1616,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         {/* RIGHT COLUMN: Professional Summary + Experience + Education */}
         <div 
           id="cv-main-body" 
-          className={`${paddingMain} flex flex-col ${gapSection} text-slate-850 bg-white print:col-span-8 ${
-            forcePrintLayout ? 'col-span-8' : 'md:col-span-8'
+          className={`${paddingMain} flex flex-col ${gapSection} text-slate-850 bg-white print:col-span-9 ${
+            forcePrintLayout ? 'col-span-9' : 'md:col-span-9'
           }`}
         >
           {/* HEADER AREA */}
@@ -1457,13 +1627,21 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             </h1>
             <h2 
               style={{ color: tplStyle.primary }}
-              className={`font-bold ${hTitles} tracking-wider uppercase flex items-center gap-2`}
+              className={`font-bold ${hTitlesJorge} tracking-wider uppercase flex items-center flex-wrap gap-2`}
             >
-              <span 
-                style={{ backgroundColor: tplStyle.primary }}
-                className="w-1.5 h-1.5 rounded-full inline-block"
-              ></span>
-              {personalInfo.titles[lang]}
+              <div className="flex items-center gap-2">
+                <span 
+                  style={{ backgroundColor: tplStyle.primary }}
+                  className="w-1.5 h-1.5 rounded-full inline-block"
+                ></span>
+                <span>{personalInfo.titles[lang]}</span>
+              </div>
+              {personalInfo.registroMedico && (
+                <>
+                  <span className="opacity-40 select-none">|</span>
+                  <span className="text-slate-600 font-bold uppercase tracking-wider">{personalInfo.registroMedico}</span>
+                </>
+              )}
             </h2>
           </EditableSection>
 
@@ -1481,7 +1659,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               <h2>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</h2>
             </div>
             <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
-              {perfil[lang]}
+              <FormattedText text={perfil[lang]} />
             </p>
           </EditableSection>
 
@@ -1547,7 +1725,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                       <ul className={`list-disc list-outside pl-4 space-y-1.5 ${tBody} text-slate-600 ${mbItem}`}>
                         {job.details[lang].map((detail, dIdx) => (
                           <li key={dIdx} className="leading-relaxed">
-                            {detail}
+                            <FormattedText text={detail} />
                           </li>
                         ))}
                       </ul>
@@ -1563,7 +1741,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                           <strong className="text-slate-950 font-bold">
                             {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro' : 'Achievement')}:
                           </strong>{' '}
-                          {job.achievement[lang]}
+                          <FormattedText text={job.achievement[lang]} />
                         </p>
                       </div>
                     )}
@@ -1585,43 +1763,40 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               <h2>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</h2>
             </div>
 
-            <div className={`flex flex-col ${gapInsideSection}`}>
+            <div className="flex flex-col gap-3">
               {educacion.map((edu) => (
                 <div
                   key={edu.id}
-                  className={`${blockPaddingEdu} rounded-xl border border-slate-100 bg-slate-50/45 hover:bg-slate-50/85 transition-colors duration-200 flex flex-col gap-3`}
+                  className="p-1 px-1.5 hover:bg-slate-50/40 rounded-lg transition-colors duration-200 flex flex-col gap-1"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-                    <div className="flex flex-col gap-1">
+                  <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+                    <div className="flex flex-col sm:flex-row sm:items-baseline gap-1.5 sm:gap-2.5">
                       <h3 className={`${tBody} font-bold text-slate-900 leading-snug`}>
                         {edu.degree[lang]}
                       </h3>
+                      <span className="hidden sm:inline text-slate-300">•</span>
                       <p className={`${tSecBody} text-slate-500`}>
                         {edu.institution}
                       </p>
                     </div>
                     <div className="sm:text-right shrink-0">
-                      <span 
-                        style={{ color: tplStyle.primary, backgroundColor: tplStyle.primaryBg }}
-                        className={`inline-flex items-center gap-1.5 ${tSecBody} px-2.5 py-1 rounded-full font-semibold`}
-                      >
-                        <Calendar className="w-3.5 h-3.5" />
+                      <span className={`inline-flex items-center gap-1 ${tSecBody} text-slate-400 font-medium`}>
+                        <Calendar className="w-3 h-3 text-slate-400" />
                         <span>{edu.period}</span>
                       </span>
                     </div>
                   </div>
 
                   {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                    <div className="flex flex-col gap-2 mt-1.5">
+                    <div className="flex flex-col gap-1 mt-1 pl-1">
                       {edu.achievements[lang].map((achievement, aIdx) => (
                         <div
                           key={aIdx}
-                          style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
-                          className={`border-l-2 p-2 ${tBody} text-slate-650 rounded-r-md flex items-start gap-1.5`}
+                          className="pl-3 relative text-slate-600 flex items-start"
                         >
-                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
-                          <p>
-                            <strong className="text-slate-900 font-bold">
+                          <span className="absolute left-0 top-[6px] w-1 h-1 rounded-full bg-teal-500 shrink-0"></span>
+                          <p className={`${tSecBody} leading-relaxed`}>
+                            <strong className="text-slate-800 font-semibold">
                               {lang === 'es' ? 'Logro' : 'Achievement'}:
                             </strong>{' '}
                             {achievement}
@@ -1655,16 +1830,22 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
       >
         {/* CENTERED HEADER */}
         <EditableSection section="personal" className="flex flex-col items-center text-center pb-6 border-b border-slate-250 gap-4">
-          {renderAvatar('w-28 h-28 md:w-32 md:h-32 aspect-square', '50%', true)}
+          {renderAvatar('w-[129px] h-[129px] md:w-[147px] md:h-[147px] aspect-square', '50%', true)}
           <div className="flex flex-col gap-1">
             <h1 className={`${hName} font-extrabold tracking-tight text-slate-900 leading-tight`}>
               {personalInfo.name}
             </h1>
             <h2 
               style={{ color: tplStyle.primary }}
-              className={`font-bold ${tBase} tracking-widest uppercase mt-0.5`}
+              className={`font-bold ${tBase} tracking-widest uppercase mt-0.5 flex flex-wrap items-center justify-center gap-2`}
             >
-              {personalInfo.titles[lang]}
+              <span>{personalInfo.titles[lang]}</span>
+              {personalInfo.registroMedico && (
+                <>
+                  <span className="opacity-40 select-none">|</span>
+                  <span className="text-slate-600 font-bold uppercase tracking-widest">{personalInfo.registroMedico}</span>
+                </>
+              )}
             </h2>
           </div>
 
@@ -1701,7 +1882,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             <span>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</span>
           </h3>
           <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
-            {perfil[lang]}
+            <FormattedText text={perfil[lang]} />
           </p>
         </EditableSection>
 
@@ -1759,7 +1940,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         <ul className={`list-disc list-outside pl-3.5 space-y-1 ${tBody} text-slate-600 mb-1.5`}>
                           {job.details[lang].map((detail, dIdx) => (
                             <li key={dIdx} className="leading-relaxed">
-                              {detail}
+                              <FormattedText text={detail} />
                             </li>
                           ))}
                         </ul>
@@ -1775,7 +1956,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                             <strong className="text-slate-900 font-bold">
                               {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro destacado' : 'Key Achievement')}:
                             </strong>{' '}
-                            {job.achievement[lang]}
+                            <FormattedText text={job.achievement[lang]} />
                           </p>
                         </div>
                       )}
@@ -1934,7 +2115,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           className="text-white p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 border-b-4"
         >
           {/* Custom shape for executive frame */}
-          {renderAvatar('w-28 h-28 md:w-32 md:h-32 aspect-square', '20px', true)}
+          {renderAvatar('w-[129px] h-[129px] md:w-[147px] md:h-[147px] aspect-square', '20px', true)}
           
           <div className="flex flex-col gap-2 md:text-left text-center flex-1">
             <h1 className={`${hName} font-extrabold tracking-tight text-white leading-none`}>
@@ -1942,9 +2123,15 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             </h1>
             <h2 
               style={{ color: tplStyle.secondary }}
-              className={`font-semibold ${tBase} tracking-widest uppercase mt-0.5`}
+              className={`font-semibold ${tBase} tracking-widest uppercase mt-0.5 flex flex-wrap items-center justify-center md:justify-start gap-2`}
             >
-              ✦ {personalInfo.titles[lang]}
+              <span>✦ {personalInfo.titles[lang]}</span>
+              {personalInfo.registroMedico && (
+                <>
+                  <span className="opacity-40 select-none">|</span>
+                  <span className="text-white/80 font-semibold uppercase tracking-widest">{personalInfo.registroMedico}</span>
+                </>
+              )}
             </h2>
 
             {/* Quick clean contact layout in header bar */}
@@ -1973,8 +2160,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           {/* LEFT SIDEBAR */}
           <div 
             style={{ backgroundColor: `${tplStyle.primaryBg}80` }}
-            className={`${paddingSidebar} border-r border-slate-100 flex flex-col ${gapSidebar} print:col-span-4 ${
-              forcePrintLayout ? 'col-span-4' : 'md:col-span-4'
+            className={`${paddingSidebar} border-r border-slate-100 flex flex-col ${gapSidebar} print:col-span-3 ${
+              forcePrintLayout ? 'col-span-3' : 'md:col-span-3'
             }`}
           >
             
@@ -1988,7 +2175,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                 <span>{lang === 'es' ? 'Perfil Ejecutivo' : 'Executive Profile'}</span>
               </h3>
               <p className={`${tBody} text-slate-650 leading-relaxed text-justify`}>
-                {perfil[lang]}
+                <FormattedText text={perfil[lang]} />
               </p>
             </EditableSection>
 
@@ -2067,8 +2254,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
 
           {/* RIGHT SIDE (Experiences, Education) */}
           {/* RIGHT SIDE (Experiences, Education) */}
-          <div className={`${paddingMain} flex flex-col ${gapSection} text-slate-800 bg-white print:col-span-8 col-span-12 ${
-            forcePrintLayout ? 'col-span-8' : 'md:col-span-8'
+          <div className={`${paddingMain} flex flex-col ${gapSection} text-slate-800 bg-white print:col-span-9 col-span-12 ${
+            forcePrintLayout ? 'col-span-9' : 'md:col-span-9'
           }`}>
             
             {/* WORK EXPERIENCE */}
@@ -2114,7 +2301,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         <ul className={`list-disc list-outside pl-3.5 space-y-1.5 ${tBody} text-slate-650 ${mbItem}`}>
                           {job.details[lang].map((detail, dIdx) => (
                             <li key={dIdx} className="leading-relaxed">
-                              {detail}
+                              <FormattedText text={detail} />
                             </li>
                           ))}
                         </ul>
@@ -2130,7 +2317,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                             <strong className="text-slate-900 font-bold">
                               {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro destacado' : 'Achievement')}:
                             </strong>{' '}
-                            {job.achievement[lang]}
+                            <FormattedText text={job.achievement[lang]} />
                           </p>
                         </div>
                       )}
@@ -2202,17 +2389,24 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         >
           <div className="flex flex-col sm:flex-row items-center gap-5 md:text-left text-center">
             {/* Rounded square avatar frame from shared helper */}
-            {renderAvatar('w-24 h-24 md:w-28 md:h-28 aspect-square', '20px', true)}
+            {renderAvatar('w-[110px] h-[110px] md:w-[129px] md:h-[129px] aspect-square', '20px', true)}
             <div className="flex flex-col gap-1">
               <h1 className={`${hName} font-black text-slate-900 tracking-tight leading-tight`}>
                 {personalInfo.name}
               </h1>
-              <span 
-                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
-                className={`px-3 py-1 font-bold rounded-lg ${tSmall} self-center sm:self-start mt-1 inline-block capitalize tracking-wider`}
-              >
-                💊 {personalInfo.titles[lang]}
-              </span>
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mt-1">
+                <span 
+                  style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                  className={`px-3 py-1 font-bold rounded-lg ${tSmall} inline-block capitalize tracking-wider`}
+                >
+                  💊 {personalInfo.titles[lang]}
+                </span>
+                {personalInfo.registroMedico && (
+                  <span className={`px-2.5 py-1 bg-slate-150 text-slate-700 font-bold rounded-lg ${tSmall} inline-block tracking-wider`}>
+                    {personalInfo.registroMedico}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -2261,7 +2455,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
             >
               <Quote className="absolute right-3.5 top-3.5 w-8 h-8 opacity-5" style={{ color: tplStyle.primary }} />
               <p className={`${tBody} text-slate-600 leading-relaxed text-justify relative z-10 font-semibold`}>
-                {perfil[lang]}
+                <FormattedText text={perfil[lang]} />
               </p>
             </EditableSection>
 
@@ -2303,7 +2497,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         <ul className={`list-disc list-outside pl-3.5 space-y-1 ${tBody} text-slate-650 ${mbItem}`}>
                           {job.details[lang].map((detail, dIdx) => (
                             <li key={dIdx} className="leading-relaxed">
-                              {detail}
+                              <FormattedText text={detail} />
                             </li>
                           ))}
                         </ul>
@@ -2319,7 +2513,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                             <span className="text-slate-900 font-bold">
                               {job.achievementLabel?.[lang] || (lang === 'es' ? 'Meta Lograda' : 'Target Achieved')}:
                             </span>{' '}
-                            {job.achievement[lang]}
+                            <FormattedText text={job.achievement[lang]} />
                           </p>
                         </div>
                       )}

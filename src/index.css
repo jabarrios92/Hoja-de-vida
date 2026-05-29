@@ -63,7 +63,7 @@
   }
 
   #cv-sidebar {
-    grid-column: span 4 / span 4 !important;
+    grid-column: span 3 / span 3 !important;
     background-color: #1e2530 !important;
     color: #ffffff !important;
     -webkit-print-color-adjust: exact !important;
@@ -72,7 +72,7 @@
   }
 
   #cv-main-body {
-    grid-column: span 8 / span 8 !important;
+    grid-column: span 9 / span 9 !important;
     background-color: #ffffff !important;
     color: #1e293b !important;
     -webkit-print-color-adjust: exact !important;

@@ -19,6 +19,7 @@ export const INITIAL_CV_DATA: CVData = {
     location: "Laureles, Medellín",
     phone: "+57 300 609 8075",
     email: "jabarrios92@gmail.com",
+    registroMedico: "1140884814",
     avatarUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=350&auto=format&fit=crop",
     photoEffect: {
       type: 'malibu',

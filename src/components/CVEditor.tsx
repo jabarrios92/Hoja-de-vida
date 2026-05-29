@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { CVData, Experiencia, Certificacion, Educacion, Referencia } from '../types';
 import { Plus, Trash2, Check, Sparkles, User, FileText, Briefcase, GraduationCap, Award, Users, Palette, Sliders, Layers, Camera } from 'lucide-react';
+import { RichInput, RichTextarea } from './RichInput';
 
 interface CVEditorProps {
   data: CVData;
@@ -989,23 +990,29 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
               Perfil Profesional y Resumen Clínico
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 relative">
                 <label className="text-[11px] font-bold text-slate-400 uppercase">Perfil Profesional (Spanish)</label>
-                <textarea
+                <RichTextarea
                   rows={6}
                   value={data.perfil.es}
                   onChange={(e) => updatePerfil('es', e.target.value)}
                   className="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-white focus:outline-none focus:border-teal-500 leading-relaxed resize-y"
                 />
+                <div className="text-[10px] text-slate-500 mt-1 pl-1">
+                  💡 Seleccione palabras para darles formato de estilo Microsoft Word.
+                </div>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-2 relative">
                 <label className="text-[11px] font-bold text-slate-400 uppercase">Perfil Profesional (English)</label>
-                <textarea
+                <RichTextarea
                   rows={6}
                   value={data.perfil.en}
                   onChange={(e) => updatePerfil('en', e.target.value)}
                   className="bg-slate-900 border border-slate-800 rounded-lg p-3 text-xs text-white focus:outline-none focus:border-teal-500 leading-relaxed resize-y"
                 />
+                <div className="text-[10px] text-slate-500 mt-1 pl-1">
+                  💡 Select words to apply Word-style bold, italic or underline formatting.
+                </div>
               </div>
             </div>
           </div>
@@ -1156,7 +1163,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[9px] font-bold text-slate-400 uppercase">Etiqueta del Logro (ES)</label>
-                        <input
+                        <RichInput
                           type="text"
                           value={job.achievementLabel?.es || ''}
                           onChange={(e) =>
@@ -1170,7 +1177,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[9px] font-bold text-slate-400 uppercase">Logro Principal</label>
-                        <input
+                        <RichInput
                           type="text"
                           value={job.achievement?.es || ''}
                           onChange={(e) =>
@@ -1217,7 +1224,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[9px] font-bold text-slate-400 uppercase">Achievement Label (EN)</label>
-                        <input
+                        <RichInput
                           type="text"
                           value={job.achievementLabel?.en || ''}
                           onChange={(e) =>
@@ -1231,7 +1238,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <label className="text-[9px] font-bold text-slate-400 uppercase">Key Achievement</label>
-                        <input
+                        <RichInput
                           type="text"
                           value={job.achievement?.en || ''}
                           onChange={(e) =>
@@ -1265,7 +1272,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                           <div className="flex-1 flex flex-col gap-2">
                             <div className="flex flex-col gap-1">
                               <label className="text-[8px] font-bold text-teal-500 uppercase">Español {detailIdx + 1}</label>
-                              <input
+                              <RichInput
                                 type="text"
                                 value={job.details.es[detailIdx] || ''}
                                 onChange={(e) => handleUpdateExperienceDetail(job.id, 'es', detailIdx, e.target.value)}
@@ -1274,7 +1281,7 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
                             </div>
                             <div className="flex flex-col gap-1">
                               <label className="text-[8px] font-bold text-teal-500 uppercase">English {detailIdx + 1}</label>
-                              <input
+                              <RichInput
                                 type="text"
                                 value={job.details.en[detailIdx] || ''}
                                 onChange={(e) => handleUpdateExperienceDetail(job.id, 'en', detailIdx, e.target.value)}

@@ -64,6 +64,7 @@ export interface CVData {
     email: string;
     avatarUrl: string;
     photoEffect?: PhotoEffect;
+    registroMedico?: string;
   };
   perfil: TranslationMap;
   competencias: TranslationMap<string[]>;
