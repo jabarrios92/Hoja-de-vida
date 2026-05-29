@@ -5,18 +5,109 @@
 
 import React from 'react';
 import { motion } from 'motion/react';
-import { MapPin, Phone, Mail, Award, Briefcase, GraduationCap, Heart, CheckCircle2, Calendar } from 'lucide-react';
+import { 
+  MapPin, 
+  Phone, 
+  Mail, 
+  Award, 
+  Briefcase, 
+  GraduationCap, 
+  Heart, 
+  CheckCircle2, 
+  Calendar, 
+  Star,
+  Quote,
+  Pencil,
+  Plus,
+  Trash2,
+  Save,
+  X,
+  Check
+} from 'lucide-react';
 import { CVData, Language } from '../types';
+import { getTemplateById } from '../templatesData';
 
 interface CVViewerProps {
   data: CVData;
+  onChange?: (updated: CVData) => void;
   lang: Language;
   onAvatarChange?: (newUrl: string) => void;
   forcePrintLayout?: boolean;
+  onEditSection?: (section: 'personal' | 'diseno' | 'perfil' | 'competencias' | 'experiencia' | 'certificaciones' | 'educacion' | 'referencias') => void;
 }
 
-export default function CVViewer({ data, lang, onAvatarChange, forcePrintLayout }: CVViewerProps) {
+export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePrintLayout, onEditSection }: CVViewerProps) {
   const { personalInfo, perfil, competencias, certificaciones, referencias, experiencia, educacion } = data;
+  
+  // Get active template configuration
+  const activeTemplateId = data.templateId || 'jorge';
+  const tplStyle = getTemplateById(activeTemplateId);
+  const activeLayout = tplStyle.layout;
+
+  // Use manual font family overlay, or fall back to template default
+  const preferredFont = data.fontFamily || tplStyle.fontFamily || 'Inter';
+
+  // Compute profile photo effect styles based on Canva-inspired settings
+  const effect = personalInfo.photoEffect || { 
+    type: 'none', 
+    intensity: 35, 
+    showFrame: true, 
+    frameColor: tplStyle.secondary, // default to template anchor color!
+    frameWidth: 4, 
+    shape: 'circle' 
+  };
+  const type = effect.type;
+  const intensity = effect.intensity;
+  const showFrame = effect.showFrame !== false;
+  const frameColor = effect.frameColor || tplStyle.secondary;
+  const frameWidth = effect.frameWidth !== undefined ? effect.frameWidth : 4;
+  const shape = effect.shape || 'circle';
+
+  let shapeBorderRadius = '9999px'; // Default circle
+  let shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+
+  if (shape === 'oval') {
+    shapeBorderRadius = '50%'; 
+    shapeClass = 'w-32 h-40 md:w-36 md:h-44';
+  } else if (shape === 'square') {
+    shapeBorderRadius = '0px';
+    shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+  } else if (shape === 'rounded-square') {
+    shapeBorderRadius = '24px';
+    shapeClass = 'w-36 h-36 md:w-40 md:h-40 aspect-square';
+  } else if (shape === 'rectangular') {
+    shapeBorderRadius = '16px';
+    shapeClass = 'w-32 h-40 md:w-36 md:h-44';
+  }
+
+  let glowStyle: React.CSSProperties = {};
+  let innerStyle: React.CSSProperties = {
+    borderColor: showFrame ? frameColor : 'transparent',
+    borderWidth: showFrame ? `${frameWidth}px` : '0px',
+    borderStyle: showFrame && frameWidth > 0 ? 'solid' : 'none',
+    borderRadius: shapeBorderRadius,
+  };
+  let imageStyle: React.CSSProperties = {
+    borderRadius: shapeBorderRadius,
+  };
+
+  if (type !== 'none') {
+    const normalizedIntensity = intensity / 100;
+
+    if (type === 'malibu') {
+      imageStyle.filter = `contrast(${1 + normalizedIntensity * 0.12}) saturate(${1 + normalizedIntensity * 0.25}) brightness(${0.98 + normalizedIntensity * 0.05})`;
+    } else if (type === 'radioactive') {
+      imageStyle.filter = `contrast(${1 + normalizedIntensity * 0.08}) saturate(${1 + normalizedIntensity * 0.15})`;
+    } else if (type === 'retro') {
+      imageStyle.filter = `sepia(${normalizedIntensity * 0.15}) contrast(${1 + normalizedIntensity * 0.1}) saturate(${1 + normalizedIntensity * 0.2})`;
+    } else if (type === 'midnight') {
+      imageStyle.filter = `contrast(${1 + normalizedIntensity * 0.08}) brightness(${0.95 + normalizedIntensity * 0.05}) saturate(${1 + normalizedIntensity * 0.15})`;
+    } else if (type === 'chroma') {
+      imageStyle.filter = `contrast(${1 + normalizedIntensity * 0.15}) saturate(${1 + normalizedIntensity * 0.3})`;
+    }
+  } else {
+    glowStyle.filter = `drop-shadow(0 10px 15px rgba(0, 0, 0, ${0.15 + (intensity / 100) * 0.35}))`;
+  }
 
   // Handles photo upload internally
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,7 +128,7 @@ export default function CVViewer({ data, lang, onAvatarChange, forcePrintLayout 
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1
+        staggerChildren: 0.08
       }
     }
   };
@@ -51,37 +142,1145 @@ export default function CVViewer({ data, lang, onAvatarChange, forcePrintLayout 
     }
   };
 
-  return (
-    <motion.div
-      id="cv-print-area"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${
-        forcePrintLayout 
-          ? 'grid grid-cols-12 !rounded-none shadow-xl border border-slate-200' 
-          : 'grid grid-cols-1 md:grid-cols-12'
-      }`}
-    >
-      {/* LEFT COLUMN: Sidebar (Slate blue tint) */}
+  const fontStyleMap: Record<string, string> = {
+    'Inter': '"Inter", ui-sans-serif, system-ui, -apple-system, sans-serif',
+    'Roboto': '"Roboto", ui-sans-serif, system-ui, sans-serif',
+    'Outfit': '"Outfit", ui-sans-serif, system-ui, sans-serif',
+    'Playfair Display': '"Playfair Display", Georgia, Cambria, serif',
+    'Lora': '"Lora", Georgia, Cambria, serif',
+    'Merriweather': '"Merriweather", Georgia, Cambria, serif',
+  };
+
+  const rootFontFamily = fontStyleMap[preferredFont] || preferredFont;
+
+  // Spacing & scaling mappings for absolute design precision:
+  const spacing = data.spacingMode || 'balanced';
+  const size = data.baseFontSize || 'normal';
+
+  // 1. Spacing helper maps
+  const gapSidebar = spacing === 'compact' ? 'gap-5' : spacing === 'spacious' ? 'gap-12' : 'gap-9';
+  const gapSection = spacing === 'compact' ? 'gap-5' : spacing === 'spacious' ? 'gap-11' : 'gap-8.5';
+  const gapInsideSection = spacing === 'compact' ? 'gap-4' : spacing === 'spacious' ? 'gap-10' : 'gap-7';
+  const gapList = spacing === 'compact' ? 'gap-1.5' : spacing === 'spacious' ? 'gap-3.5' : 'gap-2';
+  const gapGroup = spacing === 'compact' ? 'gap-2.5' : spacing === 'spacious' ? 'gap-5' : 'gap-3.5';
+  const gapSubItem = spacing === 'compact' ? 'gap-1' : spacing === 'spacious' ? 'gap-2.5' : 'gap-1.5';
+  const paddingMain = spacing === 'compact' ? 'p-6 md:p-8' : spacing === 'spacious' ? 'p-12 md:p-14' : 'p-8 md:p-11';
+  const paddingMainAcademia = spacing === 'compact' ? 'p-6 md:p-8' : spacing === 'spacious' ? 'p-12 md:p-16' : 'p-8 md:p-14';
+  const paddingSidebar = spacing === 'compact' ? 'p-5 md:p-6' : spacing === 'spacious' ? 'p-10 md:p-11' : 'p-8';
+  const paddingGrid = spacing === 'compact' ? 'p-3' : spacing === 'spacious' ? 'p-6' : 'p-4.5';
+  const blockPadding = spacing === 'compact' ? 'p-2.5' : spacing === 'spacious' ? 'p-4.5' : 'p-3.5';
+  const blockPaddingEdu = spacing === 'compact' ? 'p-2.5' : spacing === 'spacious' ? 'p-4.5' : 'p-4';
+  const mbItem = spacing === 'compact' ? 'mb-1' : spacing === 'spacious' ? 'mb-4' : 'mb-2';
+  
+  // 2. Font sizing classes mapped dynamically for perfect "distribución de textos"
+  const tBase = size === 'small' ? 'text-xs md:text-sm' : size === 'large' ? 'text-base' : 'text-sm';
+  const tContact = size === 'small' ? 'text-[11px] md:text-xs' : size === 'large' ? 'text-sm md:text-base' : 'text-xs md:text-sm';
+  const tBody = size === 'small' ? 'text-[11px]' : size === 'large' ? 'text-[13.5px]' : 'text-xs';
+  const tSecBody = size === 'small' ? 'text-[9.5px]' : size === 'large' ? 'text-[12.5px]' : 'text-[11px]';
+  const tSmall = size === 'small' ? 'text-[8.5px]' : size === 'large' ? 'text-[11px]' : 'text-[9.5px]';
+  
+  // Titles & Headings
+  const hName = size === 'small' ? 'text-2xl md:text-3xl' : size === 'large' ? 'text-4xl md:text-5xl' : 'text-3xl md:text-4xl';
+  const hTitles = size === 'small' ? 'text-[10px] md:text-xs tracking-widest' : size === 'large' ? 'text-sm md:text-base tracking-widest' : 'text-xs md:text-sm tracking-widest';
+  const hSection = size === 'small' ? 'text-xs font-bold uppercase tracking-widest' : size === 'large' ? 'text-base font-extrabold uppercase tracking-widest' : 'text-sm font-bold uppercase tracking-widest';
+  const hBadge = size === 'small' ? 'text-[9.5px]' : size === 'large' ? 'text-xs' : 'text-[11px]';
+  const hRole = size === 'small' ? 'text-xs font-bold' : size === 'large' ? 'text-sm font-bold' : 'text-xs font-bold';
+
+  // Local Inline Editing States
+  const [localEditingSection, setLocalEditingSection] = React.useState<'personal' | 'perfil' | 'competencias' | 'experiencia' | 'certificaciones' | 'educacion' | 'referencias' | null>(null);
+
+  // 1. Personal Info draft states
+  const [draftName, setDraftName] = React.useState('');
+  const [draftTitleEs, setDraftTitleEs] = React.useState('');
+  const [draftTitleEn, setDraftTitleEn] = React.useState('');
+  const [draftLocation, setDraftLocation] = React.useState('');
+  const [draftPhone, setDraftPhone] = React.useState('');
+  const [draftEmail, setDraftEmail] = React.useState('');
+
+  // 2. Perfil draft states
+  const [draftPerfilEs, setDraftPerfilEs] = React.useState('');
+  const [draftPerfilEn, setDraftPerfilEn] = React.useState('');
+
+  // 3. Competencias draft states
+  const [draftCompEs, setDraftCompEs] = React.useState('');
+  const [draftCompEn, setDraftCompEn] = React.useState('');
+
+  // 4. Certificaciones draft state
+  const [draftCerts, setDraftCerts] = React.useState<any[]>([]);
+
+  // 5. Referencias draft state
+  const [draftRefs, setDraftRefs] = React.useState<any[]>([]);
+
+  // 6. Experiencia draft state
+  const [draftExps, setDraftExps] = React.useState<any[]>([]);
+
+  // 7. Educacion draft state
+  const [draftEdus, setDraftEdus] = React.useState<any[]>([]);
+
+  // Auto-populate draft states on localEditingSection activation
+  React.useEffect(() => {
+    if (localEditingSection) {
+      if (localEditingSection === 'personal') {
+        setDraftName(personalInfo.name || '');
+        setDraftTitleEs(personalInfo.titles?.es || '');
+        setDraftTitleEn(personalInfo.titles?.en || '');
+        setDraftLocation(personalInfo.location || '');
+        setDraftPhone(personalInfo.phone || '');
+        setDraftEmail(personalInfo.email || '');
+      } else if (localEditingSection === 'perfil') {
+        setDraftPerfilEs(perfil?.es || '');
+        setDraftPerfilEn(perfil?.en || '');
+      } else if (localEditingSection === 'competencias') {
+        setDraftCompEs(competencias?.es?.join(', ') || '');
+        setDraftCompEn(competencias?.en?.join(', ') || '');
+      } else if (localEditingSection === 'certificaciones') {
+        setDraftCerts(JSON.parse(JSON.stringify(certificaciones || [])));
+      } else if (localEditingSection === 'referencias') {
+        setDraftRefs(JSON.parse(JSON.stringify(referencias || [])));
+      } else if (localEditingSection === 'experiencia') {
+        setDraftExps(JSON.parse(JSON.stringify(experiencia || [])));
+      } else if (localEditingSection === 'educacion') {
+        setDraftEdus(JSON.parse(JSON.stringify(educacion || [])));
+      }
+    }
+  }, [localEditingSection, data]);
+
+  // Certifications Helpers
+  const handleCertChange = (idx: number, key: string, value: any, subkey?: 'es' | 'en') => {
+    const list = [...draftCerts];
+    if (subkey) {
+      list[idx] = {
+        ...list[idx],
+        [key]: {
+          ...(list[idx][key] || { es: '', en: '' }),
+          [subkey]: value
+        }
+      };
+    } else {
+      list[idx] = {
+        ...list[idx],
+        [key]: value
+      };
+    }
+    setDraftCerts(list);
+  };
+
+  const addCert = () => {
+    setDraftCerts([
+      ...draftCerts,
+      { id: Math.random().toString(), title: { es: '', en: '' }, entity: '', year: '' }
+    ]);
+  };
+
+  const removeCert = (idx: number) => {
+    setDraftCerts(draftCerts.filter((_, i) => i !== idx));
+  };
+
+  // References Helpers
+  const handleRefChange = (idx: number, key: string, value: any, subkey?: 'es' | 'en') => {
+    const list = [...draftRefs];
+    if (subkey) {
+      list[idx] = {
+        ...list[idx],
+        [key]: {
+          ...(list[idx][key] || { es: '', en: '' }),
+          [subkey]: value
+        }
+      };
+    } else {
+      list[idx] = {
+        ...list[idx],
+        [key]: value
+      };
+    }
+    setDraftRefs(list);
+  };
+
+  const addRef = () => {
+    setDraftRefs([
+      ...draftRefs,
+      { id: Math.random().toString(), name: '', role: { es: '', en: '' }, institution: '', phone: '' }
+    ]);
+  };
+
+  const removeRef = (idx: number) => {
+    setDraftRefs(draftRefs.filter((_, i) => i !== idx));
+  };
+
+  // Experience Helpers
+  const handleExpChange = (idx: number, key: string, value: any, subkey?: 'es' | 'en') => {
+    const list = [...draftExps];
+    if (subkey) {
+      list[idx] = {
+        ...list[idx],
+        [key]: {
+          ...(list[idx][key] || { es: '', en: '' }),
+          [subkey]: value
+        }
+      };
+    } else {
+      list[idx] = {
+        ...list[idx],
+        [key]: value
+      };
+    }
+    setDraftExps(list);
+  };
+
+  const addExp = () => {
+    setDraftExps([
+      ...draftExps,
+      {
+        id: Math.random().toString(),
+        role: { es: '', en: '' },
+        company: '',
+        location: '',
+        period: { es: '', en: '' },
+        details: { es: [], en: [] },
+        achievement: { es: '', en: '' },
+        achievementLabel: { es: '', en: '' }
+      }
+    ]);
+  };
+
+  const removeExp = (idx: number) => {
+    setDraftExps(draftExps.filter((_, i) => i !== idx));
+  };
+
+  // Education Helpers
+  const handleEduChange = (idx: number, key: string, value: any, subkey?: 'es' | 'en') => {
+    const list = [...draftEdus];
+    if (subkey) {
+      list[idx] = {
+        ...list[idx],
+        [key]: {
+          ...(list[idx][key] || { es: '', en: '' }),
+          [subkey]: value
+        }
+      };
+    } else {
+      list[idx] = {
+        ...list[idx],
+        [key]: value
+      };
+    }
+    setDraftEdus(list);
+  };
+
+  const addEdu = () => {
+    setDraftEdus([
+      ...draftEdus,
+      {
+        id: Math.random().toString(),
+        degree: { es: '', en: '' },
+        institution: '',
+        period: '',
+        achievements: { es: [], en: [] }
+      }
+    ]);
+  };
+
+  const removeEdu = (idx: number) => {
+    setDraftEdus(draftEdus.filter((_, i) => i !== idx));
+  };
+
+  // Core Saver
+  const handleSaveInline = () => {
+    if (!onChange) return;
+
+    let updatedData = { ...data };
+
+    if (localEditingSection === 'personal') {
+      updatedData.personalInfo = {
+        ...updatedData.personalInfo,
+        name: draftName,
+        titles: { es: draftTitleEs, en: draftTitleEn },
+        location: draftLocation,
+        phone: draftPhone,
+        email: draftEmail,
+      };
+    } else if (localEditingSection === 'perfil') {
+      updatedData.perfil = {
+        es: draftPerfilEs,
+        en: draftPerfilEn,
+      };
+    } else if (localEditingSection === 'competencias') {
+      const splitAndTrim = (str: string) => 
+        str.split(',')
+           .map(s => s.trim())
+           .filter(Boolean);
+      updatedData.competencias = {
+        es: splitAndTrim(draftCompEs),
+        en: splitAndTrim(draftCompEn),
+      };
+    } else if (localEditingSection === 'certificaciones') {
+      updatedData.certificaciones = draftCerts;
+    } else if (localEditingSection === 'referencias') {
+      updatedData.referencias = draftRefs;
+    } else if (localEditingSection === 'experiencia') {
+      updatedData.experiencia = draftExps;
+    } else if (localEditingSection === 'educacion') {
+      updatedData.educacion = draftEdus;
+    }
+
+    onChange(updatedData);
+    setLocalEditingSection(null);
+  };
+
+  const getSectionTitle = (sec: string) => {
+    if (lang === 'es') {
+      switch(sec) {
+        case 'personal': return 'Información Personal y de Contacto';
+        case 'perfil': return 'Perfil y Resumen Profesional';
+        case 'competencias': return 'Competencias y Habilidades';
+        case 'certificaciones': return 'Certificaciones y Cursos';
+        case 'referencias': return 'Referencias';
+        case 'experiencia': return 'Experiencia Médica y Profesional';
+        case 'educacion': return 'Educación Médica y Académica';
+        default: return 'Editar Sección';
+      }
+    } else {
+      switch(sec) {
+        case 'personal': return 'Personal & Contact Information';
+        case 'perfil': return 'Professional Profile';
+        case 'competencias': return 'Skills & Core Competencies';
+        case 'certificaciones': return 'Certifications & Courses';
+        case 'referencias': return 'Professional References';
+        case 'experiencia': return 'Medical & Clinical Experience';
+        case 'educacion': return 'Medical Education';
+        default: return 'Edit Section';
+      }
+    }
+  };
+
+  const renderInlineEditor = () => {
+    if (!localEditingSection) return null;
+
+    const modalTitle = getSectionTitle(localEditingSection);
+
+    return (
       <div 
-        id="cv-sidebar" 
-        className={`bg-[#1e2530] text-slate-100 p-8 flex flex-col gap-9 print:col-span-4 ${
-          forcePrintLayout ? 'col-span-4' : 'md:col-span-4'
-        }`}
+        className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs print:hidden"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setLocalEditingSection(null);
+          }
+        }}
       >
-        {/* Avatar Area with hidden upload trigger */}
-        <div className="relative group flex flex-col items-center">
-          <div className="relative w-36 h-36 md:w-40 md:h-40 rounded-full overflow-hidden border-4 border-slate-700 hover:border-teal-500 transition-colors duration-300 shadow-lg bg-slate-800">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          className="w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden text-slate-100"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="p-4 border-b border-slate-850 bg-slate-950/40 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 bg-teal-500/10 text-teal-400 rounded-lg">
+                <Pencil className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <h3 className="text-sm font-black text-slate-100 uppercase tracking-widest leading-none">
+                  {modalTitle}
+                </h3>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  {lang === 'es' ? 'Edita los datos directamente y presiona Guardar' : 'Modify information and press Save'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setLocalEditingSection(null)}
+              className="p-1 px-2 rounded-md hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="flex-grow overflow-y-auto p-5 md:p-6 bg-slate-900/40 flex flex-col gap-4.5 text-left">
+            {localEditingSection === 'personal' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Nombre Completo' : 'Full Name'}</label>
+                  <input 
+                    type="text" 
+                    value={draftName} 
+                    onChange={(e) => setDraftName(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all font-medium" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Ubicación' : 'Location'}</label>
+                  <input 
+                    type="text" 
+                    value={draftLocation} 
+                    onChange={(e) => setDraftLocation(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Teléfono' : 'Phone'}</label>
+                  <input 
+                    type="text" 
+                    value={draftPhone} 
+                    onChange={(e) => setDraftPhone(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Correo Electrónico' : 'Email Address'}</label>
+                  <input 
+                    type="text" 
+                    value={draftEmail} 
+                    onChange={(e) => setDraftEmail(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Título Profesional (Español)' : 'Professional Title (Spanish)'}</label>
+                  <input 
+                    type="text" 
+                    value={draftTitleEs} 
+                    onChange={(e) => setDraftTitleEs(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Título Profesional (Inglés)' : 'Professional Title (English)'}</label>
+                  <input 
+                    type="text" 
+                    value={draftTitleEn} 
+                    onChange={(e) => setDraftTitleEn(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all" 
+                  />
+                </div>
+              </div>
+            )}
+
+            {localEditingSection === 'perfil' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Español)' : 'Professional Summary (Spanish)'}</label>
+                  <textarea 
+                    rows={5} 
+                    value={draftPerfilEs} 
+                    onChange={(e) => setDraftPerfilEs(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Resumen Profesional (Inglés)' : 'Professional Summary (English)'}</label>
+                  <textarea 
+                    rows={5} 
+                    value={draftPerfilEn} 
+                    onChange={(e) => setDraftPerfilEn(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                  />
+                </div>
+              </div>
+            )}
+
+            {localEditingSection === 'competencias' && (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Competencias en Español (separadas por coma)' : 'Skills in Spanish (comma separated)'}</label>
+                  <textarea 
+                    rows={3} 
+                    value={draftCompEs} 
+                    onChange={(e) => setDraftCompEs(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                    placeholder="ej. Diagnóstico Clínico, Medicina Preventiva, Liderazgo"
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-slate-400 mb-1.5">{lang === 'es' ? 'Competencias en Inglés (separadas por coma)' : 'Skills in English (comma separated)'}</label>
+                  <textarea 
+                    rows={3} 
+                    value={draftCompEn} 
+                    onChange={(e) => setDraftCompEn(e.target.value)} 
+                    className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:ring-1 focus:ring-teal-500/30 transition-all leading-relaxed" 
+                    placeholder="e.g. Clinical Diagnosis, Preventive Medicine, Leadership"
+                  />
+                </div>
+              </div>
+            )}
+
+            {localEditingSection === 'certificaciones' && (
+              <div className="flex flex-col gap-4">
+                {draftCerts.map((cert, index) => (
+                  <div key={cert.id || index} className="p-3.5 border border-slate-800 bg-slate-950/30 rounded-xl relative flex flex-col gap-3 font-sans">
+                    <button 
+                      onClick={() => removeCert(index)} 
+                      className="absolute top-2.5 right-2.5 p-1 px-1.5 bg-red-950/40 hover:bg-red-900 border border-red-900/30 text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'es' ? 'Borrar' : 'Delete'}</span>
+                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pr-16 text-left">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Título (ES)' : 'Title (ES)'}</label>
+                        <input 
+                          type="text" 
+                          value={cert.title?.es || ''} 
+                          onChange={(e) => handleCertChange(index, 'title', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Título (EN)' : 'Title (EN)'}</label>
+                        <input 
+                          type="text" 
+                          value={cert.title?.en || ''} 
+                          onChange={(e) => handleCertChange(index, 'title', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Entidad Emisora' : 'Issuing Authority'}</label>
+                        <input 
+                          type="text" 
+                          value={cert.entity || ''} 
+                          onChange={(e) => handleCertChange(index, 'entity', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Año / Fecha' : 'Year / Date'}</label>
+                        <input 
+                          type="text" 
+                          value={cert.year || ''} 
+                          onChange={(e) => handleCertChange(index, 'year', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button 
+                  onClick={addCert} 
+                  className="py-2.5 px-4 border border-dashed border-slate-800 hover:border-slate-700 hover:bg-slate-850/40 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+                >
+                  <Plus className="w-4 h-4 text-teal-400" />
+                  <span>{lang === 'es' ? 'Agregar Certificación' : 'Add Certification'}</span>
+                </button>
+              </div>
+            )}
+
+            {localEditingSection === 'referencias' && (
+              <div className="flex flex-col gap-4">
+                {draftRefs.map((ref, index) => (
+                  <div key={ref.id || index} className="p-3.5 border border-slate-800 bg-slate-950/30 rounded-xl relative flex flex-col gap-3 font-sans">
+                    <button 
+                      onClick={() => removeRef(index)} 
+                      className="absolute top-2.5 right-2.5 p-1 px-1.5 bg-red-950/40 hover:bg-red-900 border border-red-900/30 text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'es' ? 'Borrar' : 'Delete'}</span>
+                    </button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pr-16 text-left">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Nombre de la Referencia' : 'Reference Name'}</label>
+                        <input 
+                          type="text" 
+                          value={ref.name || ''} 
+                          onChange={(e) => handleRefChange(index, 'name', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Institución / Lugar' : 'Institution'}</label>
+                        <input 
+                          type="text" 
+                          value={ref.institution || ''} 
+                          onChange={(e) => handleRefChange(index, 'institution', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Teléfono / Contacto' : 'Phone / Contact'}</label>
+                        <input 
+                          type="text" 
+                          value={ref.phone || ''} 
+                          onChange={(e) => handleRefChange(index, 'phone', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Cargo (Español)' : 'Role (Spanish)'}</label>
+                        <input 
+                          type="text" 
+                          value={ref.role?.es || ''} 
+                          onChange={(e) => handleRefChange(index, 'role', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col sm:col-span-2">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Cargo (Inglés)' : 'Role (English)'}</label>
+                        <input 
+                          type="text" 
+                          value={ref.role?.en || ''} 
+                          onChange={(e) => handleRefChange(index, 'role', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button 
+                  onClick={addRef} 
+                  className="py-2.5 px-4 border border-dashed border-slate-800 hover:border-slate-700 hover:bg-slate-850/40 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+                >
+                  <Plus className="w-4 h-4 text-teal-400" />
+                  <span>{lang === 'es' ? 'Agregar Referencia' : 'Add Reference'}</span>
+                </button>
+              </div>
+            )}
+
+            {localEditingSection === 'experiencia' && (
+              <div className="flex flex-col gap-6">
+                {draftExps.map((exp, index) => (
+                  <div key={exp.id || index} className="p-4 border border-slate-800 bg-slate-950/30 rounded-xl relative flex flex-col gap-4.5 font-sans">
+                    <button 
+                      onClick={() => removeExp(index)} 
+                      className="absolute top-2.5 right-2.5 p-1 px-1.5 bg-red-950/40 hover:bg-red-900 border border-red-900/30 text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'es' ? 'Eliminar' : 'Delete'}</span>
+                    </button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pr-20 text-left">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Cargo / Posición (ES)' : 'Role / Position (ES)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.role?.es || ''} 
+                          onChange={(e) => handleExpChange(index, 'role', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Cargo / Posición (EN)' : 'Role / Position (EN)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.role?.en || ''} 
+                          onChange={(e) => handleExpChange(index, 'role', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Institución / Empresa' : 'Company / Hospital'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.company || ''} 
+                          onChange={(e) => handleExpChange(index, 'company', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Ubicación' : 'Location'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.location || ''} 
+                          onChange={(e) => handleExpChange(index, 'location', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Período (ES)' : 'Period (ES)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.period?.es || ''} 
+                          onChange={(e) => handleExpChange(index, 'period', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Período (EN)' : 'Period (EN)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.period?.en || ''} 
+                          onChange={(e) => handleExpChange(index, 'period', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Bullet Points ES */}
+                    <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/80 pb-1.5 pt-3 text-left">
+                      <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Responsabilidades Clínicas - Viñetas (ES)' : 'Clinical Responsibilities - Bullets (ES)'}</span>
+                      {(exp.details?.es || []).map((det: string, dIdx: number) => (
+                        <div key={dIdx} className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={det} 
+                            onChange={(e) => {
+                              const list = [...draftExps];
+                              const details = [...(list[index].details?.es || [])];
+                              details[dIdx] = e.target.value;
+                              list[index] = {
+                                ...list[index],
+                                details: {
+                                  ...list[index].details,
+                                  es: details
+                                }
+                              };
+                              setDraftExps(list);
+                            }} 
+                            className="flex-grow bg-slate-950 border border-slate-850 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-sans" 
+                          />
+                          <button 
+                            onClick={() => {
+                              const list = [...draftExps];
+                              const details = (list[index].details?.es || []).filter((_: any, i: number) => i !== dIdx);
+                              list[index] = {
+                                ...list[index],
+                                details: {
+                                  ...list[index].details,
+                                  es: details
+                                }
+                              };
+                              setDraftExps(list);
+                            }} 
+                            className="p-1 px-1.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        onClick={() => {
+                          const list = [...draftExps];
+                          list[index] = {
+                            ...list[index],
+                            details: {
+                              ...list[index].details,
+                              es: [...(list[index].details?.es || []), '']
+                            }
+                          };
+                          setDraftExps(list);
+                        }} 
+                        className="self-start text-[10px] font-bold text-teal-500 hover:text-teal-400 flex items-center gap-1.5 mt-0.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{lang === 'es' ? 'Añadir línea descriptiva (ES)' : 'Add bullet item (ES)'}</span>
+                      </button>
+                    </div>
+
+                    {/* Bullet Points EN */}
+                    <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/80 pb-1.5 pt-3 text-left">
+                      <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Responsabilidades Clínicas - Viñetas (EN)' : 'Clinical Responsibilities - Bullets (EN)'}</span>
+                      {(exp.details?.en || []).map((det: string, dIdx: number) => (
+                        <div key={dIdx} className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={det} 
+                            onChange={(e) => {
+                              const list = [...draftExps];
+                              const details = [...(list[index].details?.en || [])];
+                              details[dIdx] = e.target.value;
+                              list[index] = {
+                                ...list[index],
+                                details: {
+                                  ...list[index].details,
+                                  en: details
+                                }
+                              };
+                              setDraftExps(list);
+                            }} 
+                            className="flex-grow bg-slate-950 border border-slate-850 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-sans" 
+                          />
+                          <button 
+                            onClick={() => {
+                              const list = [...draftExps];
+                              const details = (list[index].details?.en || []).filter((_: any, i: number) => i !== dIdx);
+                              list[index] = {
+                                ...list[index],
+                                details: {
+                                  ...list[index].details,
+                                  en: details
+                                }
+                              };
+                              setDraftExps(list);
+                            }} 
+                            className="p-1 px-1.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        onClick={() => {
+                          const list = [...draftExps];
+                          list[index] = {
+                            ...list[index],
+                            details: {
+                              ...list[index].details,
+                              en: [...(list[index].details?.en || []), '']
+                            }
+                          };
+                          setDraftExps(list);
+                        }} 
+                        className="self-start text-[10px] font-bold text-teal-500 hover:text-teal-400 flex items-center gap-1.5 mt-0.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{lang === 'es' ? 'Añadir línea descriptiva (EN)' : 'Add bullet item (EN)'}</span>
+                      </button>
+                    </div>
+
+                    {/* Logro Extra (Optional) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pb-1 border-t border-slate-800 pt-3 text-left">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Título del Logro (ES - ej. Logro como Fundador)' : 'Achievement Label (ES - e.g. Achievement as Founder)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.achievementLabel?.es || ''} 
+                          onChange={(e) => handleExpChange(index, 'achievementLabel', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                          placeholder={lang === 'es' ? 'Logro' : 'Achievement'}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Título del Logro (EN)' : 'Achievement Label (EN)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.achievementLabel?.en || ''} 
+                          onChange={(e) => handleExpChange(index, 'achievementLabel', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                          placeholder={lang === 'es' ? 'Achievement' : 'Featured Achievement'}
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Logro Destacado (ES - Opcional)' : 'Featured Achievement (ES - Optional)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.achievement?.es || ''} 
+                          onChange={(e) => handleExpChange(index, 'achievement', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{lang === 'es' ? 'Logro Destacado (EN - Opcional)' : 'Featured Achievement (EN - Optional)'}</label>
+                        <input 
+                          type="text" 
+                          value={exp.achievement?.en || ''} 
+                          onChange={(e) => handleExpChange(index, 'achievement', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <button 
+                  onClick={addExp} 
+                  className="py-2.5 px-4 border border-dashed border-slate-800 hover:border-slate-700 hover:bg-slate-850/40 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+                >
+                  <Plus className="w-4 h-4 text-teal-400" />
+                  <span>{lang === 'es' ? 'Agregar Experiencia de Trabajo' : 'Add Work Experience'}</span>
+                </button>
+              </div>
+            )}
+
+            {localEditingSection === 'educacion' && (
+              <div className="flex flex-col gap-6">
+                {draftEdus.map((edu, index) => (
+                  <div key={edu.id || index} className="p-4 border border-slate-800 bg-slate-950/30 rounded-xl relative flex flex-col gap-4.5 font-sans">
+                    <button 
+                      onClick={() => removeEdu(index)} 
+                      className="absolute top-2.5 right-2.5 p-1 px-1.5 bg-red-950/40 hover:bg-red-900 border border-red-900/30 text-red-400 rounded-lg text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{lang === 'es' ? 'Eliminar' : 'Delete'}</span>
+                    </button>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pr-20 text-left">
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Grado / Especialidad (ES)' : 'Degree / Specialization (ES)'}</label>
+                        <input 
+                          type="text" 
+                          value={edu.degree?.es || ''} 
+                          onChange={(e) => handleEduChange(index, 'degree', e.target.value, 'es')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Grado / Especialidad (EN)' : 'Degree / Specialization (EN)'}</label>
+                        <input 
+                          type="text" 
+                          value={edu.degree?.en || ''} 
+                          onChange={(e) => handleEduChange(index, 'degree', e.target.value, 'en')} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Institución Académica' : 'Institution name'}</label>
+                        <input 
+                          type="text" 
+                          value={edu.institution || ''} 
+                          onChange={(e) => handleEduChange(index, 'institution', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">{lang === 'es' ? 'Período / Año' : 'Period / Year'}</label>
+                        <input 
+                          type="text" 
+                          value={edu.period || ''} 
+                          onChange={(e) => handleEduChange(index, 'period', e.target.value)} 
+                          className="bg-slate-950 border border-slate-800 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none" 
+                        />
+                      </div>
+                    </div>
+
+                    {/* Achievements ES */}
+                    <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/80 pb-1.5 pt-3 text-left">
+                      <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Logros / Tesis (ES)' : 'Academic Achievements / Details (ES)'}</span>
+                      {(edu.achievements?.es || []).map((det: string, dIdx: number) => (
+                        <div key={dIdx} className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={det} 
+                            onChange={(e) => {
+                              const list = [...draftEdus];
+                              const details = [...(list[index].achievements?.es || [])];
+                              details[dIdx] = e.target.value;
+                              list[index] = {
+                                ...list[index],
+                                achievements: {
+                                  ...list[index].achievements,
+                                  es: details
+                                }
+                              };
+                              setDraftEdus(list);
+                            }} 
+                            className="flex-grow bg-slate-950 border border-slate-850 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-sans" 
+                          />
+                          <button 
+                            onClick={() => {
+                              const list = [...draftEdus];
+                              const details = (list[index].achievements?.es || []).filter((_: any, i: number) => i !== dIdx);
+                              list[index] = {
+                                ...list[index],
+                                achievements: {
+                                  ...list[index].achievements,
+                                  es: details
+                                }
+                              };
+                              setDraftEdus(list);
+                            }} 
+                            className="p-1 px-1.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        onClick={() => {
+                          const list = [...draftEdus];
+                          const achievements = list[index].achievements || { es: [], en: [] };
+                          list[index] = {
+                            ...list[index],
+                            achievements: {
+                              ...achievements,
+                              es: [...(achievements.es || []), '']
+                            }
+                          };
+                          setDraftEdus(list);
+                        }} 
+                        className="self-start text-[10px] font-bold text-teal-500 hover:text-teal-400 flex items-center gap-1.5 mt-0.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{lang === 'es' ? 'Añadir logro académico (ES)' : 'Add academic item (ES)'}</span>
+                      </button>
+                    </div>
+
+                    {/* Achievements EN */}
+                    <div className="mt-2 flex flex-col gap-2 border-t border-slate-800/80 pb-1.5 pt-3 text-left">
+                      <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">{lang === 'es' ? 'Logros / Tesis (EN)' : 'Academic Achievements / Details (EN)'}</span>
+                      {(edu.achievements?.en || []).map((det: string, dIdx: number) => (
+                        <div key={dIdx} className="flex items-center gap-2">
+                          <input 
+                            type="text" 
+                            value={det} 
+                            onChange={(e) => {
+                              const list = [...draftEdus];
+                              const details = [...(list[index].achievements?.en || [])];
+                              details[dIdx] = e.target.value;
+                              list[index] = {
+                                ...list[index],
+                                achievements: {
+                                  ...list[index].achievements,
+                                  en: details
+                                }
+                              };
+                              setDraftEdus(list);
+                            }} 
+                            className="flex-grow bg-slate-950 border border-slate-850 focus:border-teal-500 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none font-sans" 
+                          />
+                          <button 
+                            onClick={() => {
+                              const list = [...draftEdus];
+                              const details = (list[index].achievements?.en || []).filter((_: any, i: number) => i !== dIdx);
+                              list[index] = {
+                                ...list[index],
+                                achievements: {
+                                  ...list[index].achievements,
+                                  en: details
+                                }
+                              };
+                              setDraftEdus(list);
+                            }} 
+                            className="p-1 px-1.5 text-red-500 hover:text-red-400 hover:bg-red-500/10 rounded cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                      <button 
+                        onClick={() => {
+                          const list = [...draftEdus];
+                          const achievements = list[index].achievements || { es: [], en: [] };
+                          list[index] = {
+                            ...list[index],
+                            achievements: {
+                              ...achievements,
+                              en: [...(achievements.en || []), '']
+                            }
+                          };
+                          setDraftEdus(list);
+                        }} 
+                        className="self-start text-[10px] font-bold text-teal-500 hover:text-teal-400 flex items-center gap-1.5 mt-0.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>{lang === 'es' ? 'Añadir logro académico (EN)' : 'Add academic item (EN)'}</span>
+                      </button>
+                    </div>
+
+                  </div>
+                ))}
+                <button 
+                  onClick={addEdu} 
+                  className="py-2.5 px-4 border border-dashed border-slate-800 hover:border-slate-700 hover:bg-slate-850/40 rounded-xl text-xs font-bold text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 transition-all cursor-pointer mt-1"
+                >
+                  <Plus className="w-4 h-4 text-teal-400" />
+                  <span>{lang === 'es' ? 'Agregar Educación' : 'Add Education'}</span>
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-4 border-t border-slate-850 bg-slate-950/40 flex items-center justify-end gap-3">
+            <button
+              onClick={() => setLocalEditingSection(null)}
+              className="py-2 px-4 hover:bg-slate-800 text-xs font-bold text-slate-400 hover:text-slate-200 rounded-xl transition-all cursor-pointer border border-transparent"
+            >
+              {lang === 'es' ? 'Cancelar' : 'Cancel'}
+            </button>
+            <button
+              onClick={handleSaveInline}
+              className="py-2 px-5 bg-teal-600 hover:bg-teal-500 text-xs font-extrabold text-white rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-teal-950/30"
+            >
+              <Check className="w-4 h-4 stroke-[2.5]" />
+              <span>{lang === 'es' ? 'Guardar Cambios' : 'Save Changes'}</span>
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
+  // Hover Editable Component Wrapper
+  const EditableSection = ({ 
+    section, 
+    children, 
+    className = "",
+    style 
+  }: { 
+    section: 'personal' | 'diseno' | 'perfil' | 'competencias' | 'experiencia' | 'certificaciones' | 'educacion' | 'referencias', 
+    children: React.ReactNode, 
+    className?: string,
+    style?: React.CSSProperties
+  }) => {
+    const isInteractive = !forcePrintLayout;
+
+    if (!isInteractive) {
+      return <div style={style} className={className}>{children}</div>;
+    }
+
+    return (
+      <div 
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          setLocalEditingSection(section);
+        }}
+        style={style}
+        className={`group relative rounded-xl transition-all duration-200 hover:ring-2 hover:ring-teal-500/40 hover:bg-teal-500/[0.015] p-2 cursor-pointer ${className}`}
+        title="Doble-clic para modificar o editar el texto de esta sección"
+      >
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-teal-500 text-white rounded-md px-2 py-0.5 text-[9px] font-bold tracking-wide shadow-md pointer-events-none z-[10] flex items-center gap-1">
+          <Pencil className="w-2.5 h-2.5 stroke-[2.5]" />
+          <span>Doble-clic para editar</span>
+        </div>
+        {children}
+      </div>
+    );
+  };
+
+  // Shared Avatar Renderer
+  const renderAvatar = (customShapeClass?: string, customShapeBorderRadius?: string, hideHint?: boolean) => {
+    const finalShapeClass = customShapeClass || shapeClass;
+    const finalBorderRadius = customShapeBorderRadius || shapeBorderRadius;
+
+    const customInnerStyle = {
+      ...innerStyle,
+      borderRadius: finalBorderRadius
+    };
+    const customImageStyle = {
+      ...imageStyle,
+      borderRadius: finalBorderRadius
+    };
+
+    return (
+      <div className="relative group flex flex-col items-center shrink-0">
+        <div className="relative" style={glowStyle}>
+          {type !== 'none' && (
+            <div 
+              className="absolute inset-[3.5px] transition-all duration-350 pointer-events-none"
+              style={{
+                borderRadius: finalBorderRadius,
+                background: type === 'malibu' 
+                  ? 'linear-gradient(135deg, #ec4899 15%, #a855f7 50%, #06b6d4 90%)' 
+                  : type === 'radioactive'
+                  ? 'linear-gradient(135deg, #10b981 10%, #22c55e 50%, #34d399 90%)'
+                  : type === 'retro'
+                  ? 'linear-gradient(135deg, #f97316 10%, #ef4444 50%, #facc15 90%)'
+                  : type === 'midnight'
+                  ? 'linear-gradient(135deg, #3b82f6 10%, #6366f1 50%, #06b6d4 90%)'
+                  : type === 'chroma'
+                  ? 'linear-gradient(135deg, #8b5cf6 10%, #ec4899 50%, #d946ef 90%)'
+                  : 'transparent',
+                transform: `scale(${1 + (intensity / 100) * 0.22})`,
+                opacity: (intensity / 100) * 0.98,
+                filter: `blur(${8 + (intensity / 100) * 20}px)`,
+                mixBlendMode: 'screen',
+              }}
+            />
+          )}
+          
+          <div 
+            className={`relative overflow-hidden transition-all duration-300 bg-slate-800 flex items-center justify-center ${finalShapeClass}`}
+            style={customInnerStyle}
+          >
             <img
               src={personalInfo.avatarUrl}
               alt={personalInfo.name}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-all duration-300"
+              style={customImageStyle}
             />
             {onAvatarChange && (
-              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-xs text-white font-medium cursor-pointer transition-opacity duration-200">
-                <span className="text-center px-2">Cambiar Foto / Upload Photo</span>
+              <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-[10px] text-white font-medium cursor-pointer transition-opacity duration-200">
+                <span className="text-center px-2">Cambiar Foto</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -91,243 +1290,1152 @@ export default function CVViewer({ data, lang, onAvatarChange, forcePrintLayout 
               </label>
             )}
           </div>
-          {/* Soft hint beneath photo */}
-          {onAvatarChange && (
-            <span className="text-[10px] text-slate-400 mt-2 hover:text-teal-400 transition-colors cursor-pointer md:block hidden print:hidden">
-              (Click foto para cambiar)
-            </span>
-          )}
         </div>
-
-        {/* CONTACT INFO */}
-        <div id="contact-info-section" className="flex flex-col gap-4">
-          <h3 className="text-teal-400 font-bold tracking-wider text-sm border-b border-slate-700/80 pb-2 uppercase">
-            {lang === 'es' ? 'Contacto' : 'Contact'}
-          </h3>
-          <ul className="flex flex-col gap-3 text-sm text-slate-300">
-            <li className="flex items-start gap-3">
-              <MapPin className="w-4 h-4 text-teal-400 shrink-0 mt-0.5" />
-              <span>{personalInfo.location}</span>
-            </li>
-            <li className="flex items-center gap-3">
-              <Phone className="w-4 h-4 text-teal-400 shrink-0" />
-              <a href={`tel:${personalInfo.phone}`} className="hover:text-teal-400 transition-colors">
-                {personalInfo.phone}
-              </a>
-            </li>
-            <li className="flex items-center gap-3">
-              <Mail className="w-4 h-4 text-teal-400 shrink-0" aria-label="Mail icon" />
-              <a href={`mailto:${personalInfo.email}`} className="hover:text-teal-400 transition-colors break-all">
-                {personalInfo.email}
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        {/* COMPETENCIAS / SKILLS */}
-        <div id="skills-section" className="flex flex-col gap-4">
-          <h3 className="text-teal-400 font-bold tracking-wider text-sm border-b border-slate-700/80 pb-2 uppercase">
-            {lang === 'es' ? 'Competencias' : 'Skills & Focus'}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {competencias[lang]?.map((comp, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-800/60 hover:bg-slate-800 text-slate-200 border border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200"
-              >
-                {comp}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CERTIFICACIONES */}
-        <div id="certifications-section" className="flex flex-col gap-4">
-          <h3 className="text-teal-400 font-bold tracking-wider text-sm border-b border-slate-700/80 pb-2 uppercase">
-            {lang === 'es' ? 'Certificaciones' : 'Certifications'}
-          </h3>
-          <div className="flex flex-col gap-3">
-            {certificaciones.map((cert) => (
-              <div key={cert.id} className="flex flex-col text-xs leading-relaxed border-l-2 border-teal-500/30 pl-3 py-0.5">
-                <span className="font-semibold text-slate-200">{cert.title[lang]}</span>
-                <span className="text-slate-400 text-[11px]">
-                  {cert.entity} <span className="opacity-50">|</span> {cert.year}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* REFERENCIAS */}
-        <div id="references-section" className="flex flex-col gap-4 pt-6 border-t border-slate-700/80">
-          <h3 className="text-teal-400 font-bold tracking-wider text-sm uppercase">
-            {lang === 'es' ? 'Referencias' : 'References'}
-          </h3>
-          <div className="flex flex-col gap-4">
-            {Array.isArray(referencias) && referencias.length > 0 ? (
-              referencias.map((ref) => (
-                <div key={ref.id || Math.random().toString()} className="flex flex-col text-xs leading-relaxed">
-                  <span className="font-bold text-white text-[13px] tracking-wide">{ref.name}</span>
-                  {ref.role && ref.role[lang] && (
-                    <span className="text-slate-300 font-medium mt-0.5">{ref.role[lang]}</span>
-                  )}
-                  {(ref.institution || ref.phone) && (
-                    <span className="text-slate-400 font-normal mt-0.5 flex flex-wrap items-center">
-                      {ref.institution && <span>{ref.institution}</span>}
-                      {ref.institution && ref.phone && <span className="mx-1.5 text-slate-600 font-light">|</span>}
-                      {ref.phone && <span>{ref.phone}</span>}
-                    </span>
-                  )}
-                </div>
-              ))
-            ) : (
-              <p className="text-xs text-slate-500 italic">
-                {lang === 'es' ? 'Sin referencias' : 'No references'}
-              </p>
-            )}
-          </div>
-        </div>
+        {onAvatarChange && !hideHint && (
+          <span className="text-[10px] text-slate-400 mt-2 hover:text-teal-400 transition-colors cursor-pointer md:block hidden print:hidden">
+            (Click para cambiar)
+          </span>
+        )}
       </div>
-
-      {/* RIGHT COLUMN: Professional Summary + Experience + Education */}
-      <div 
-        id="cv-main-body" 
-        className={`p-9 md:p-11 flex flex-col gap-10 md:gap-11 text-slate-800 bg-white print:col-span-8 ${
-          forcePrintLayout ? 'col-span-8' : 'md:col-span-8'
+    );
+  };  /* =========================================================================
+     LAYOUT VARIANT 1: 'jorge' (THE SIDEBAR COLUMN LAYOUT)
+     ========================================================================= */
+  if (activeLayout === 'jorge') {
+    const itemCircleOffset = spacing === 'compact' ? '-left-[20px] top-1' : spacing === 'spacious' ? '-left-[40px] top-2' : '-left-[31px] top-1.5';
+    return (
+      <motion.div
+        id="cv-print-area"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ fontFamily: rootFontFamily }}
+        className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${
+          forcePrintLayout 
+            ? 'grid grid-cols-12 !rounded-none shadow-xl border border-slate-200' 
+            : 'grid grid-cols-1 md:grid-cols-12'
         }`}
       >
-        {/* HEADER AREA */}
-        <div id="header-area" className="flex flex-col gap-2">
-          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
-            {personalInfo.name}
-          </h1>
-          <h2 className="text-teal-600 font-bold text-lg tracking-wider uppercase flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-teal-500 rounded-full inline-block"></span>
-            {personalInfo.titles[lang]}
-          </h2>
+        {/* LEFT COLUMN: Sidebar (Thematic background) */}
+        <div 
+          id="cv-sidebar" 
+          style={{ backgroundColor: tplStyle.sidebarBg, color: tplStyle.sidebarText }}
+          className={`${paddingSidebar} flex flex-col ${gapSidebar} print:col-span-4 ${
+            forcePrintLayout ? 'col-span-4' : 'md:col-span-4'
+          }`}
+        >
+          {/* Avatar rendering from shared helper */}
+          {renderAvatar()}
+
+          {/* CONTACT INFO */}
+          <EditableSection section="personal" className="flex flex-col gap-4">
+            <h3 
+              style={{ color: tplStyle.sidebarAccent, borderColor: `${tplStyle.sidebarAccent}55` }}
+              className={`font-bold tracking-wider ${tBase} border-b pb-2 uppercase`}
+            >
+              {lang === 'es' ? 'Contacto' : 'Contact'}
+            </h3>
+            <ul className={`flex flex-col ${gapList} ${tContact}`}>
+              <li className="flex items-start gap-3">
+                <MapPin className="w-4 h-4 shrink-0 mt-0.5" style={{ color: tplStyle.sidebarAccent }} />
+                <span>{personalInfo.location}</span>
+              </li>
+              <li className="flex items-center gap-3">
+                <Phone className="w-4 h-4 shrink-0" style={{ color: tplStyle.sidebarAccent }} />
+                <a href={`tel:${personalInfo.phone}`} className="hover:opacity-85 transition-opacity">
+                  {personalInfo.phone}
+                </a>
+              </li>
+              <li className="flex items-center gap-3">
+                <Mail className="w-4 h-4 shrink-0" style={{ color: tplStyle.sidebarAccent }} aria-label="Mail icon" />
+                <a href={`mailto:${personalInfo.email}`} className="hover:opacity-85 transition-opacity break-all">
+                  {personalInfo.email}
+                </a>
+              </li>
+            </ul>
+          </EditableSection>
+
+          {/* COMPETENCIAS / SKILLS */}
+          <EditableSection section="competencias" className="flex flex-col gap-4">
+            <h3 
+              style={{ color: tplStyle.sidebarAccent, borderColor: `${tplStyle.sidebarAccent}55` }}
+              className={`font-bold tracking-wider ${tBase} border-b pb-2 uppercase`}
+            >
+              {lang === 'es' ? 'Competencias' : 'Skills & Focus'}
+            </h3>
+            <div className="flex flex-col gap-2">
+              {competencias[lang]?.map((comp, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    borderLeftColor: tplStyle.sidebarAccent,
+                    backgroundColor: tplStyle.badgeBg,
+                    borderColor: `${tplStyle.sidebarAccent}12`
+                  }}
+                  className="group flex items-center border-l-2 rounded-r-lg rounded-l-xs border-y border-r px-3 py-2.5 transition-all duration-200 hover:translate-x-1 cursor-default"
+                >
+                  <span 
+                    style={{ color: tplStyle.sidebarText }} 
+                    className={`font-medium tracking-wide ${hBadge} leading-tight text-left`}
+                  >
+                    {comp}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </EditableSection>
+
+          {/* CERTIFICACIONES */}
+          <EditableSection section="certificaciones" className="flex flex-col gap-4">
+            <h3 
+              style={{ color: tplStyle.sidebarAccent, borderColor: `${tplStyle.sidebarAccent}55` }}
+              className={`font-bold tracking-wider ${tBase} border-b pb-2 uppercase`}
+            >
+              {lang === 'es' ? 'Certificaciones' : 'Certifications'}
+            </h3>
+            <div className={`flex flex-col ${gapList}`}>
+              {certificaciones.map((cert) => (
+                <div 
+                  key={cert.id} 
+                  style={{ borderColor: `${tplStyle.sidebarAccent}aa` }}
+                  className={`flex flex-col ${tBody} leading-relaxed border-l-2 pl-3 py-0.5`}
+                >
+                  <span className="font-semibold text-white">{cert.title[lang]}</span>
+                  <span className={`opacity-75 ${tSecBody}`}>
+                    {cert.entity} <span className="opacity-50">|</span> {cert.year}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </EditableSection>
+
+          {/* REFERENCIAS */}
+          <EditableSection section="referencias" className="flex flex-col gap-4 pt-6 border-t border-slate-700/80">
+            <h3 
+              style={{ color: tplStyle.sidebarAccent }}
+              className={`font-bold tracking-wider ${tBase} uppercase`}
+            >
+              {lang === 'es' ? 'Referencias' : 'References'}
+            </h3>
+            <div className={`flex flex-col ${gapList}`}>
+              {Array.isArray(referencias) && referencias.length > 0 ? (
+                referencias.map((ref) => (
+                  <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-relaxed`}>
+                    <span className={`font-bold text-white ${tBase} tracking-wide`}>{ref.name}</span>
+                    {ref.role && ref.role[lang] && (
+                      <span className="text-slate-200 font-medium mt-0.5">{ref.role[lang]}</span>
+                    )}
+                    {(ref.institution || ref.phone) && (
+                      <span className="opacity-75 font-normal mt-0.5 flex flex-wrap items-center">
+                        {ref.institution && <span>{ref.institution}</span>}
+                        {ref.institution && ref.phone && <span className="mx-1.5 opacity-40">|</span>}
+                        {ref.phone && <span style={{ color: tplStyle.sidebarAccent }} className="font-semibold">{ref.phone}</span>}
+                      </span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className={`opacity-50 italic ${tBody}`}>
+                  {lang === 'es' ? 'Sin referencias' : 'No references'}
+                </p>
+              )}
+            </div>
+          </EditableSection>
         </div>
 
-        {/* PROFESSIONAL PROFILE */}
-        <section id="profile-section" className="flex flex-col gap-3">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold text-lg">
-            <div className="p-1 rounded-lg bg-teal-50 text-teal-600">
-              <Heart className="w-5 h-5" />
-            </div>
-            <h2>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</h2>
-          </div>
-          <p className="text-sm text-slate-600 leading-relaxed text-justify">
-            {perfil[lang]}
-          </p>
-        </section>
+        {/* RIGHT COLUMN: Professional Summary + Experience + Education */}
+        <div 
+          id="cv-main-body" 
+          className={`${paddingMain} flex flex-col ${gapSection} text-slate-850 bg-white print:col-span-8 ${
+            forcePrintLayout ? 'col-span-8' : 'md:col-span-8'
+          }`}
+        >
+          {/* HEADER AREA */}
+          <EditableSection section="personal" className="flex flex-col gap-2">
+            <h1 className={`${hName} font-extrabold tracking-tight text-slate-900 leading-tight`}>
+              {personalInfo.name}
+            </h1>
+            <h2 
+              style={{ color: tplStyle.primary }}
+              className={`font-bold ${hTitles} tracking-wider uppercase flex items-center gap-2`}
+            >
+              <span 
+                style={{ backgroundColor: tplStyle.primary }}
+                className="w-1.5 h-1.5 rounded-full inline-block"
+              ></span>
+              {personalInfo.titles[lang]}
+            </h2>
+          </EditableSection>
 
-        {/* WORK EXPERIENCE */}
-        <section id="experience-section" className="flex flex-col gap-4">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold text-lg">
-            <div className="p-1 rounded-lg bg-teal-50 text-teal-600">
-              <Briefcase className="w-5 h-5" />
+          {/* PROFESSIONAL PROFILE */}
+          <EditableSection section="perfil" className="flex flex-col gap-3">
+            <div 
+              className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}
+            >
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1.5 rounded-lg"
+              >
+                <Heart className="w-5 h-5" />
+              </div>
+              <h2>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</h2>
             </div>
-            <h2>{lang === 'es' ? 'Experiencia Profesional' : 'Work Experience'}</h2>
-          </div>
+            <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
+              {perfil[lang]}
+            </p>
+          </EditableSection>
 
-          <div className="relative border-l-2 border-slate-100 ml-3.5 pl-6 flex flex-col gap-8">
-            {experiencia.map((job) => {
-              const isCurrent = job.period.es.toLowerCase().includes('actual') || 
-                               job.period.en.toLowerCase().includes('present');
-              return (
-                <motion.div
-                  key={job.id}
-                  variants={itemVariants}
-                  className="relative"
+          {/* WORK EXPERIENCE */}
+          <EditableSection section="experiencia" className="flex flex-col gap-4">
+            <div className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}>
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1.5 rounded-lg"
+              >
+                <Briefcase className="w-5 h-5" />
+              </div>
+              <h2>{lang === 'es' ? 'Experiencia Profesional' : 'Work Experience'}</h2>
+            </div>
+
+            <div className={`relative border-l-2 border-slate-100 ml-3.5 pl-6 flex flex-col ${gapSection}`}>
+              {experiencia.map((job) => {
+                const isCurrent = job.period.es.toLowerCase().includes('actual') || 
+                                 job.period.en.toLowerCase().includes('present');
+                return (
+                  <motion.div
+                    key={job.id}
+                    variants={itemVariants}
+                    className="relative"
+                  >
+                    {/* Connector Dot */}
+                    <span 
+                      style={{ borderColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
+                      className={`absolute ${itemCircleOffset} w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center shadow-sm transition-colors duration-200`}
+                    >
+                      <span 
+                        style={{ backgroundColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
+                        className="w-1.5 h-1.5 rounded-full transition-colors duration-200"
+                      ></span>
+                    </span>
+
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 mb-2">
+                      <div>
+                        <h3 className={`${tBase} font-bold text-slate-900 leading-tight`}>
+                          {job.role[lang]}
+                        </h3>
+                        <p 
+                          style={{ color: tplStyle.primary }}
+                          className={`${tSecBody} font-semibold`}
+                        >
+                          {job.company} <span className="text-slate-400 font-normal">| {job.location}</span>
+                        </p>
+                      </div>
+                      {/* Date Pill */}
+                      <span 
+                        style={{ 
+                          color: isCurrent ? tplStyle.primary : '#475569', 
+                          backgroundColor: isCurrent ? tplStyle.primaryBg : '#f1f5f9',
+                          borderColor: isCurrent ? `${tplStyle.primary}33` : '#e2e8f0'
+                        }}
+                        className={`self-start ${tSecBody} font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap transition-colors duration-200`}
+                      >
+                        {job.period[lang]}
+                      </span>
+                    </div>
+
+                    {job.details[lang] && job.details[lang].length > 0 && (
+                      <ul className={`list-disc list-outside pl-4 space-y-1.5 ${tBody} text-slate-600 ${mbItem}`}>
+                        {job.details[lang].map((detail, dIdx) => (
+                          <li key={dIdx} className="leading-relaxed">
+                            {detail}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {job.achievement && job.achievement[lang] && (
+                      <div 
+                        style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
+                        className={`border-l-2 ${blockPadding} ${tBody} text-slate-650 rounded-r-md mt-1.5 flex items-start gap-1.5`}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
+                        <p>
+                          <strong className="text-slate-950 font-bold">
+                            {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro' : 'Achievement')}:
+                          </strong>{' '}
+                          {job.achievement[lang]}
+                        </p>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </EditableSection>
+
+          {/* EDUCATION */}
+          <EditableSection section="educacion" className="flex flex-col gap-4 mt-2">
+            <div className={`flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold ${tBase}`}>
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1.5 rounded-lg"
+              >
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <h2>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</h2>
+            </div>
+
+            <div className={`flex flex-col ${gapInsideSection}`}>
+              {educacion.map((edu) => (
+                <div
+                  key={edu.id}
+                  className={`${blockPaddingEdu} rounded-xl border border-slate-100 bg-slate-50/45 hover:bg-slate-50/85 transition-colors duration-200 flex flex-col gap-3`}
                 >
-                  {/* Connector Dot */}
-                  <span className={`absolute -left-[31px] top-1.5 w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center shadow-sm transition-colors duration-200 ${
-                    isCurrent ? 'border-teal-500' : 'border-slate-300'
-                  }`}>
-                    <span className={`w-1.5 h-1.5 rounded-full transition-colors duration-200 ${
-                      isCurrent ? 'bg-teal-500' : 'bg-slate-300'
-                    }`}></span>
-                  </span>
-
-                  <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 mb-2">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900 leading-tight">
-                        {job.role[lang]}
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                    <div className="flex flex-col gap-1">
+                      <h3 className={`${tBody} font-bold text-slate-900 leading-snug`}>
+                        {edu.degree[lang]}
                       </h3>
-                      <p className="text-xs font-semibold text-teal-600">
-                        {job.company} <span className="text-slate-400 font-normal">| {job.location}</span>
+                      <p className={`${tSecBody} text-slate-500`}>
+                        {edu.institution}
                       </p>
                     </div>
-                    {/* Date Pill */}
-                    <span className={`self-start text-[11px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap transition-colors duration-200 ${
-                      isCurrent 
-                        ? 'text-teal-700 bg-teal-50 border-teal-100' 
-                        : 'text-slate-500 bg-slate-100 border-slate-200'
-                    }`}>
-                      {job.period[lang]}
-                    </span>
+                    <div className="sm:text-right shrink-0">
+                      <span 
+                        style={{ color: tplStyle.primary, backgroundColor: tplStyle.primaryBg }}
+                        className={`inline-flex items-center gap-1.5 ${tSecBody} px-2.5 py-1 rounded-full font-semibold`}
+                      >
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>{edu.period}</span>
+                      </span>
+                    </div>
                   </div>
 
-                  {job.details[lang] && job.details[lang].length > 0 && (
-                    <ul className="list-disc list-outside pl-4 space-y-1.5 text-xs text-slate-600 mb-2">
-                      {job.details[lang].map((detail, dIdx) => (
-                        <li key={dIdx} className="leading-relaxed">
-                          {detail}
-                        </li>
+                  {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
+                    <div className="flex flex-col gap-2 mt-1.5">
+                      {edu.achievements[lang].map((achievement, aIdx) => (
+                        <div
+                          key={aIdx}
+                          style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
+                          className={`border-l-2 p-2 ${tBody} text-slate-650 rounded-r-md flex items-start gap-1.5`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
+                          <p>
+                            <strong className="text-slate-900 font-bold">
+                              {lang === 'es' ? 'Logro' : 'Achievement'}:
+                            </strong>{' '}
+                            {achievement}
+                          </p>
+                        </div>
                       ))}
-                    </ul>
-                  )}
-
-                  {job.achievement && job.achievement[lang] && (
-                    <div className="bg-slate-50 border-l-2 border-teal-500 p-2 text-xs text-slate-600 rounded-r-md mt-1.5 flex items-start gap-1.5">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-600 shrink-0 mt-0.5" />
-                      <p>
-                        <strong className="text-slate-900 font-bold">
-                          {lang === 'es' ? 'Logro' : 'Achievement'}:
-                        </strong>{' '}
-                        {job.achievement[lang]}
-                      </p>
                     </div>
                   )}
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* EDUCATION */}
-        <section id="education-section" className="flex flex-col gap-4 mt-2">
-          <div className="flex items-center gap-2 border-b border-slate-100 pb-2 text-slate-900 font-bold text-lg">
-            <div className="p-1 rounded-lg bg-teal-50 text-teal-600">
-              <GraduationCap className="w-5 h-5" />
+                </div>
+              ))}
             </div>
-            <h2>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</h2>
+          </EditableSection>
+        </div>
+        {renderInlineEditor()}
+      </motion.div>
+    );
+  }
+
+  /* =========================================================================
+     LAYOUT VARIANT 2: 'academia' (MINIMALIST ACADEMIA - ELEGANT 1-COLUMN FORMAT)
+     ========================================================================= */
+  if (activeLayout === 'academia') {
+    return (
+      <motion.div
+        id="cv-print-area"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ fontFamily: rootFontFamily }}
+        className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${paddingMainAcademia} flex flex-col ${gapSection} text-slate-800`}
+      >
+        {/* CENTERED HEADER */}
+        <EditableSection section="personal" className="flex flex-col items-center text-center pb-6 border-b border-slate-250 gap-4">
+          {renderAvatar('w-28 h-28 md:w-32 md:h-32 aspect-square', '50%', true)}
+          <div className="flex flex-col gap-1">
+            <h1 className={`${hName} font-extrabold tracking-tight text-slate-900 leading-tight`}>
+              {personalInfo.name}
+            </h1>
+            <h2 
+              style={{ color: tplStyle.primary }}
+              className={`font-bold ${tBase} tracking-widest uppercase mt-0.5`}
+            >
+              {personalInfo.titles[lang]}
+            </h2>
           </div>
 
-          <div className="flex flex-col gap-4">
-            {educacion.map((edu) => (
-              <div
-                key={edu.id}
-                className="p-4 rounded-xl border border-slate-100 bg-slate-50/45 hover:bg-slate-50/80 transition-colors duration-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
-              >
-                <div className="flex flex-col gap-1">
-                  <h3 className="text-sm font-bold text-slate-900 leading-snug">
-                    {edu.degree[lang]}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {edu.institution}
-                  </p>
-                </div>
-                <div className="sm:text-right shrink-0">
-                  <span className="inline-flex items-center gap-1.5 text-xs text-teal-600 bg-teal-50 px-2.5 py-1 rounded-full font-semibold">
-                    <Calendar className="w-3.5 h-3.5" />
-                    <span>{edu.period}</span>
-                  </span>
-                </div>
-              </div>
-            ))}
+          {/* CONTACT LIST STRIP */}
+          <div className={`flex flex-wrap justify-center items-center gap-x-5 gap-y-2 ${tContact} text-slate-600 mt-1`}>
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.primary }} />
+              <span>{personalInfo.location}</span>
+            </span>
+            <span className="hidden sm:inline text-slate-200">|</span>
+            <span className="flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.primary }} />
+              <a href={`tel:${personalInfo.phone}`} className="hover:opacity-85 transition-opacity">
+                {personalInfo.phone}
+              </a>
+            </span>
+            <span className="hidden sm:inline text-slate-250">|</span>
+            <span className="flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.primary }} />
+              <a href={`mailto:${personalInfo.email}`} className="hover:opacity-85 transition-opacity break-all">
+                {personalInfo.email}
+              </a>
+            </span>
           </div>
-        </section>
-      </div>
-    </motion.div>
-  );
+        </EditableSection>
+
+        {/* PROFILE STATEMENT */}
+        <EditableSection section="perfil" className="flex flex-col gap-2.5">
+          <h3 
+            style={{ borderColor: `${tplStyle.primary}55` }}
+            className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 w-full text-left ${hSection}`}
+          >
+            <Heart className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+            <span>{lang === 'es' ? 'Perfil Profesional' : 'Professional Profile'}</span>
+          </h3>
+          <p className={`${tBody} text-slate-600 leading-relaxed text-justify`}>
+            {perfil[lang]}
+          </p>
+        </EditableSection>
+
+        {/* TWO SECTION BLOCKS SIDE-BY-SIDE OR GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+          
+          {/* MAIN COLUMN (Experience & Education) */}
+          <div className={`md:col-span-8 flex flex-col ${gapSection}`}>
+            
+            {/* WORK EXPERIENCE */}
+            <EditableSection section="experiencia" className="flex flex-col gap-4">
+              <h3 
+                style={{ borderColor: `${tplStyle.primary}55` }}
+                className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 text-left ${hSection}`}
+              >
+                <Briefcase className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Experiencia Profesional' : 'Work Experience'}</span>
+              </h3>
+              
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {experiencia.map((job) => {
+                  const isCurrent = job.period.es.toLowerCase().includes('actual') || 
+                                   job.period.en.toLowerCase().includes('present');
+                  return (
+                    <div 
+                      key={job.id} 
+                      style={{ borderColor: `${tplStyle.primary}33` }}
+                      className="relative pl-3 border-l-2"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-1.5">
+                        <div>
+                          <h4 className={`${tBase} font-bold text-slate-900 leading-tight`}>
+                            {job.role[lang]}
+                          </h4>
+                          <p 
+                            style={{ color: tplStyle.primary }}
+                            className={`${tSecBody} font-semibold`}
+                          >
+                            {job.company} <span className="text-slate-400 font-normal">| {job.location}</span>
+                          </p>
+                        </div>
+                        <span 
+                          style={{ 
+                            color: isCurrent ? tplStyle.primary : '#475569', 
+                            backgroundColor: isCurrent ? tplStyle.primaryBg : '#f8fafc',
+                            borderColor: isCurrent ? `${tplStyle.primary}33` : '#e2e8f0'
+                          }}
+                          className={`self-start ${tSecBody} font-semibold px-2 py-0.5 rounded border transition-colors`}
+                        >
+                          {job.period[lang]}
+                        </span>
+                      </div>
+
+                      {job.details[lang] && job.details[lang].length > 0 && (
+                        <ul className={`list-disc list-outside pl-3.5 space-y-1 ${tBody} text-slate-600 mb-1.5`}>
+                          {job.details[lang].map((detail, dIdx) => (
+                            <li key={dIdx} className="leading-relaxed">
+                              {detail}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {job.achievement && job.achievement[lang] && (
+                        <div 
+                          style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}70` }}
+                          className={`border-l ${blockPadding} ${tBody} text-slate-600 rounded-r-md mt-1 flex items-start gap-1.5`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
+                          <p>
+                            <strong className="text-slate-900 font-bold">
+                              {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro destacado' : 'Key Achievement')}:
+                            </strong>{' '}
+                            {job.achievement[lang]}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </EditableSection>
+
+            {/* EDUCATION */}
+            <EditableSection section="educacion" className="flex flex-col gap-4">
+              <h3 
+                style={{ borderColor: `${tplStyle.primary}55` }}
+                className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 text-left ${hSection}`}
+              >
+                <GraduationCap className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {educacion.map((edu) => (
+                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-150 rounded-xl bg-slate-50/40 flex flex-col gap-1.5`}>
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
+                      <div>
+                        <h4 className={`${tBody} font-bold text-slate-900`}>{edu.degree[lang]}</h4>
+                        <p className={`${tSecBody} text-slate-500`}>{edu.institution}</p>
+                      </div>
+                      <span 
+                        style={{ color: tplStyle.primary }}
+                        className={`${tSecBody} font-bold shrink-0 bg-white px-2 py-0.5 rounded border border-slate-200`}
+                      >
+                        {edu.period}
+                      </span>
+                    </div>
+                    {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
+                      <div className="flex flex-col gap-1 border-t border-slate-150/60 pt-1.5 mt-1.5">
+                        {edu.achievements[lang].map((achievement, aIdx) => (
+                          <div key={aIdx} className={`text-[11px] text-slate-655 flex items-start gap-1`}>
+                            <span style={{ color: tplStyle.primary }} className="font-bold shrink-0">•</span>
+                            <p>{achievement}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+          </div>
+
+          {/* SIDE COLUMN (Competencies, Certifications & References in Academia layout) */}
+          <div className={`md:col-span-4 flex flex-col ${gapSection}`}>
+            
+            {/* COMPETENCIAS */}
+            <EditableSection section="competencias" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: `${tplStyle.primary}55` }}
+                className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 text-left ${hSection}`}
+              >
+                <Star className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Competencias' : 'Skills & Focus'}</span>
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {competencias[lang]?.map((comp, idx) => (
+                  <span
+                    key={idx}
+                    style={{ backgroundColor: tplStyle.badgeBg, color: tplStyle.badgeText }}
+                    className={`border border-slate-200 px-2.5 py-1 rounded ${hBadge} font-semibold`}
+                  >
+                    {comp}
+                  </span>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* CERTIFICACIONES */}
+            <EditableSection section="certificaciones" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: `${tplStyle.primary}55` }}
+                className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 text-left ${hSection}`}
+              >
+                <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Certificaciones' : 'Certifications'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapList}`}>
+                {certificaciones.map((cert) => (
+                  <div 
+                    key={cert.id} 
+                    style={{ borderColor: `${tplStyle.primary}33` }}
+                    className={`${tBody} leading-normal border-l pl-2.5`}
+                  >
+                    <p className="font-bold text-slate-800">{cert.title[lang]}</p>
+                    <p className={`text-slate-500 ${tSecBody}`}>{cert.entity} • {cert.year}</p>
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* REFERENCIAS */}
+            <EditableSection section="referencias" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: `${tplStyle.primary}55` }}
+                className={`font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b pb-1 text-left ${hSection}`}
+              >
+                <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {Array.isArray(referencias) && referencias.length > 0 ? (
+                  referencias.map((ref) => (
+                    <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-normal`}>
+                      <p className="font-bold text-slate-850">{ref.name}</p>
+                      {ref.role && ref.role[lang] && (
+                        <p className={`text-slate-500 ${tSecBody}`}>{ref.role[lang]}</p>
+                      )}
+                      {ref.phone && (
+                        <p style={{ color: tplStyle.primary }} className={`font-semibold ${tSecBody} mt-0.5`}>
+                          📞 {ref.phone}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className={`opacity-50 italic ${tBody}`}>
+                    {lang === 'es' ? 'Sin referencias' : 'No references'}
+                  </p>
+                )}
+              </div>
+            </EditableSection>
+
+          </div>
+
+        </div>
+        {renderInlineEditor()}
+      </motion.div>
+    );
+  }
+
+  /* =========================================================================
+     LAYOUT VARIANT 3: 'executive' (PRESTIGE EJECUTIVO - CLASSY EXTENSIVE TEMPLATE)
+     ========================================================================= */
+  if (activeLayout === 'executive') {
+    return (
+      <motion.div
+        id="cv-print-area"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ fontFamily: rootFontFamily }}
+        className="w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] flex flex-col"
+      >
+        {/* EXECUTIVE SOLID BANNER HEADER */}
+        <EditableSection 
+          section="personal" 
+          style={{ backgroundColor: tplStyle.bannerBg }}
+          className="text-white p-8 md:p-10 flex flex-col md:flex-row items-center gap-6 border-b-4"
+        >
+          {/* Custom shape for executive frame */}
+          {renderAvatar('w-28 h-28 md:w-32 md:h-32 aspect-square', '20px', true)}
+          
+          <div className="flex flex-col gap-2 md:text-left text-center flex-1">
+            <h1 className={`${hName} font-extrabold tracking-tight text-white leading-none`}>
+              {personalInfo.name}
+            </h1>
+            <h2 
+              style={{ color: tplStyle.secondary }}
+              className={`font-semibold ${tBase} tracking-widest uppercase mt-0.5`}
+            >
+              ✦ {personalInfo.titles[lang]}
+            </h2>
+
+            {/* Quick clean contact layout in header bar */}
+            <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 ${tContact} text-white/90`}>
+              <div className="flex items-center justify-center md:justify-start gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5">
+                <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span className="truncate">{personalInfo.location}</span>
+              </div>
+              <div className="flex items-center justify-center md:justify-start gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5">
+                <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span className="truncate">{personalInfo.phone}</span>
+              </div>
+              <div className="flex items-center justify-center md:justify-start gap-1.5 bg-white/10 px-2.5 py-1.5 rounded-lg border border-white/5">
+                <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span className="truncate break-all">{personalInfo.email}</span>
+              </div>
+            </div>
+          </div>
+        </EditableSection>
+
+        {/* DOUBLE COLUMN LAYOUT UNDER HEADER */}
+        <div className={`grid grid-cols-1 md:grid-cols-12 flex-1 ${
+          forcePrintLayout ? 'grid h-full' : ''
+        }`}>
+          
+          {/* LEFT SIDEBAR */}
+          <div 
+            style={{ backgroundColor: `${tplStyle.primaryBg}80` }}
+            className={`${paddingSidebar} border-r border-slate-100 flex flex-col ${gapSidebar} print:col-span-4 ${
+              forcePrintLayout ? 'col-span-4' : 'md:col-span-4'
+            }`}
+          >
+            
+            {/* PROFILE */}
+            <EditableSection section="perfil" className="flex flex-col gap-2.5">
+              <h3 
+                style={{ borderColor: tplStyle.secondary }}
+                className={`text-slate-900 font-bold ${hSection} uppercase tracking-wider border-b pb-1 flex items-center gap-1.5`}
+              >
+                <Heart className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Perfil Ejecutivo' : 'Executive Profile'}</span>
+              </h3>
+              <p className={`${tBody} text-slate-650 leading-relaxed text-justify`}>
+                {perfil[lang]}
+              </p>
+            </EditableSection>
+
+            {/* COMPETENCIAS */}
+            <EditableSection section="competencias" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: tplStyle.secondary }}
+                className={`text-slate-900 font-bold ${hSection} uppercase tracking-wider border-b pb-1 flex items-center gap-1.5`}
+              >
+                <Star className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Competencias' : 'Skills & focus'}</span>
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {competencias[lang]?.map((comp, idx) => (
+                  <span
+                    key={idx}
+                    style={{ backgroundColor: tplStyle.badgeBg, color: tplStyle.badgeText }}
+                    className={`border border-slate-200 px-2.5 py-1 rounded-full ${hBadge} font-bold`}
+                  >
+                    {comp}
+                  </span>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* CERTIFICACIONES */}
+            <EditableSection section="certificaciones" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: tplStyle.secondary }}
+                className={`text-slate-900 font-bold ${hSection} uppercase tracking-wider border-b pb-1 flex items-center gap-1.5`}
+              >
+                <Award className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Certificaciones' : 'Certifications'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapList}`}>
+                {certificaciones.map((cert) => (
+                  <div 
+                    key={cert.id} 
+                    style={{ borderColor: `${tplStyle.secondary}44` }}
+                    className={`${tBody} leading-relaxed border-l-2 pl-2.5`}
+                  >
+                    <p className="font-bold text-slate-800">{cert.title[lang]}</p>
+                    <p className={`text-slate-500 ${tSecBody}`}>{cert.entity} | {cert.year}</p>
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* REFERENCES */}
+            <EditableSection section="referencias" className="flex flex-col gap-3">
+              <h3 
+                style={{ borderColor: tplStyle.secondary }}
+                className={`text-slate-900 font-bold ${hSection} uppercase tracking-wider border-b pb-1 flex items-center gap-1.5`}
+              >
+                <Award className="w-3.5 h-3.5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {Array.isArray(referencias) && referencias.length > 0 ? (
+                  referencias.map((ref) => (
+                    <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-snug`}>
+                      <p className="font-bold text-slate-900">{ref.name}</p>
+                      {ref.role && ref.role[lang] && <p className={`text-slate-600 ${tSecBody}`}>{ref.role[lang]}</p>}
+                      {ref.phone && <p style={{ color: tplStyle.secondary }} className={`font-semibold ${tSecBody} mt-0.5`}>📞 {ref.phone}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <p className={`opacity-50 italic ${tBody}`}>
+                    {lang === 'es' ? 'Sin referencias' : 'No references'}
+                  </p>
+                )}
+              </div>
+            </EditableSection>
+
+          </div>
+
+          {/* RIGHT SIDE (Experiences, Education) */}
+          {/* RIGHT SIDE (Experiences, Education) */}
+          <div className={`${paddingMain} flex flex-col ${gapSection} text-slate-800 bg-white print:col-span-8 col-span-12 ${
+            forcePrintLayout ? 'col-span-8' : 'md:col-span-8'
+          }`}>
+            
+            {/* WORK EXPERIENCE */}
+            <EditableSection section="experiencia" className="flex flex-col gap-4">
+              <h3 
+                className={`text-slate-900 font-extrabold ${tBase} uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center gap-2`}
+              >
+                <Briefcase className="w-5 h-5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Trayectoria Profesional' : 'Executive Experience'}</span>
+              </h3>
+
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {experiencia.map((job) => {
+                  const isCurrent = job.period.es.toLowerCase().includes('actual') || 
+                                   job.period.en.toLowerCase().includes('present');
+                  return (
+                    <div key={job.id} className="relative pl-4 border-l-2 border-slate-100">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 mb-2">
+                        <div>
+                          <h4 className={`${tBase} font-bold text-slate-900 leading-tight`}>
+                            {job.role[lang]}
+                          </h4>
+                          <p 
+                            style={{ color: tplStyle.secondary }}
+                            className={`${tSecBody} font-semibold`}
+                          >
+                            {job.company} <span className="text-slate-400 font-normal">| {job.location}</span>
+                          </p>
+                        </div>
+                        <span 
+                          style={{ 
+                            color: isCurrent ? tplStyle.secondary : '#475569', 
+                            backgroundColor: isCurrent ? tplStyle.primaryBg : '#f8fafc',
+                            borderColor: isCurrent ? `${tplStyle.secondary}33` : '#e2e8f0'
+                          }}
+                          className={`self-start ${tSecBody} font-bold px-2.5 py-0.5 rounded border whitespace-nowrap transition-colors`}
+                        >
+                          {job.period[lang]}
+                        </span>
+                      </div>
+
+                      {job.details[lang] && job.details[lang].length > 0 && (
+                        <ul className={`list-disc list-outside pl-3.5 space-y-1.5 ${tBody} text-slate-650 ${mbItem}`}>
+                          {job.details[lang].map((detail, dIdx) => (
+                            <li key={dIdx} className="leading-relaxed">
+                              {detail}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {job.achievement && job.achievement[lang] && (
+                        <div 
+                          style={{ borderColor: tplStyle.secondary, backgroundColor: `${tplStyle.primaryBg}50` }}
+                          className={`border-l-2 ${blockPadding} ${tBody} text-slate-650 rounded-r-md mt-1.5 flex items-start gap-1.5`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.secondary }} />
+                          <p>
+                            <strong className="text-slate-900 font-bold">
+                              {job.achievementLabel?.[lang] || (lang === 'es' ? 'Logro destacado' : 'Achievement')}:
+                            </strong>{' '}
+                            {job.achievement[lang]}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </EditableSection>
+
+            {/* EDUCATION */}
+            <EditableSection section="educacion" className="flex flex-col gap-4">
+              <h3 className={`text-slate-900 font-extrabold ${tBase} uppercase tracking-wider border-b border-slate-200 pb-2 flex items-center gap-2`}>
+                <GraduationCap className="w-5 h-5 shrink-0" style={{ color: tplStyle.secondary }} />
+                <span>{lang === 'es' ? 'Formación Académica' : 'Academic Background'}</span>
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {educacion.map((edu) => (
+                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-100 rounded-xl bg-slate-50/50 flex flex-col gap-2`}>
+                    <div className="flex flex-col gap-1">
+                      <span 
+                        style={{ color: tplStyle.secondary, backgroundColor: tplStyle.primaryBg, borderColor: `${tplStyle.secondary}22` }}
+                        className={`${tSmall} font-bold border px-2 py-0.5 rounded-full self-start`}
+                      >
+                        {edu.period}
+                      </span>
+                      <h4 className={`${tBody} font-bold text-slate-900 leading-snug mt-1`}>{edu.degree[lang]}</h4>
+                      <p className={`${tSecBody} text-slate-550 font-medium`}>{edu.institution}</p>
+                    </div>
+                    {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
+                      <div className="flex flex-col gap-1 border-t border-slate-100 pt-1.5 mt-1.5">
+                        {edu.achievements[lang].map((achievement, aIdx) => (
+                          <div key={aIdx} className={`${tSmall} text-slate-655 flex items-start gap-1`}>
+                            <span style={{ color: tplStyle.secondary }} className="shrink-0">•</span>
+                            <span>{achievement}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+          </div>
+
+        </div>
+        {renderInlineEditor()}
+      </motion.div>
+    );
+  }
+
+  /* =========================================================================
+     LAYOUT VARIANT 4: 'modern' (CLÍNICO MODERNO - CONTEMPORARY HIGH-VISIBILITY LAYOUT)
+     ========================================================================= */
+  if (activeLayout === 'modern') {
+    return (
+      <motion.div
+        id="cv-print-area"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        style={{ fontFamily: rootFontFamily }}
+        className="w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] p-6 md:p-10 flex flex-col gap-7 text-slate-800"
+      >
+        {/* ASYMMETRIC CONTEMPORARY TOP HEADER */}
+        <EditableSection 
+          section="personal" 
+          className="bg-slate-50 border border-slate-150 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-6"
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-5 md:text-left text-center">
+            {/* Rounded square avatar frame from shared helper */}
+            {renderAvatar('w-24 h-24 md:w-28 md:h-28 aspect-square', '20px', true)}
+            <div className="flex flex-col gap-1">
+              <h1 className={`${hName} font-black text-slate-900 tracking-tight leading-tight`}>
+                {personalInfo.name}
+              </h1>
+              <span 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className={`px-3 py-1 font-bold rounded-lg ${tSmall} self-center sm:self-start mt-1 inline-block capitalize tracking-wider`}
+              >
+                💊 {personalInfo.titles[lang]}
+              </span>
+            </div>
+          </div>
+
+          {/* Badge-style vertical direct values */}
+          <div className={`flex flex-col gap-2 shrink-0 md:w-auto w-full ${tContact}`}>
+            <div className="flex items-center gap-2 bg-white border border-slate-100 p-2.5 rounded-xl shadow-xs">
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1 rounded-md text-indigo-650"
+              >
+                <MapPin className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-slate-700 truncate">{personalInfo.location}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white border border-slate-100 p-2.5 rounded-xl shadow-xs">
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1 rounded-md text-indigo-600"
+              >
+                <Phone className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-semibold text-slate-705 truncate">{personalInfo.phone}</span>
+            </div>
+            <div className="flex items-center gap-2 bg-white border border-slate-100 p-2.5 rounded-xl shadow-xs">
+              <div 
+                style={{ backgroundColor: tplStyle.primaryBg, color: tplStyle.primary }}
+                className="p-1 rounded-md text-indigo-600"
+              >
+                <Mail className="w-3.5 h-3.5 animate-pulse" />
+              </div>
+              <span style={{ color: tplStyle.primary }} className="font-bold underline truncate break-all">{personalInfo.email}</span>
+            </div>
+          </div>
+        </EditableSection>
+
+        {/* CORE GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 flex-1">
+          
+          {/* PROFILE + EXPERIENCES + EDUCATION */}
+          <div className={`md:col-span-8 flex flex-col ${gapSection}`}>
+            
+            {/* CLINICAL OBJECTIVE / QUOTE DESIGN */}
+            <EditableSection section="perfil" 
+              style={{ backgroundColor: `${tplStyle.primary}07`, borderColor: tplStyle.primary }}
+              className={`${blockPadding} border-l-4 rounded-r-2xl relative`}
+            >
+              <Quote className="absolute right-3.5 top-3.5 w-8 h-8 opacity-5" style={{ color: tplStyle.primary }} />
+              <p className={`${tBody} text-slate-600 leading-relaxed text-justify relative z-10 font-semibold`}>
+                {perfil[lang]}
+              </p>
+            </EditableSection>
+
+            {/* EXPERIENCIAS */}
+            <EditableSection section="experiencia" className="flex flex-col gap-3">
+              <h2 className={`font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-1 text-left ${hSection}`}>
+                <Briefcase className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Historial Profesional' : 'Experience Journal'}</span>
+              </h2>
+
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {experiencia.map((job) => {
+                  const isCurrent = job.period.es.toLowerCase().includes('actual') || 
+                                   job.period.en.toLowerCase().includes('present');
+                  return (
+                    <div 
+                      key={job.id} 
+                      className={`${blockPaddingEdu} border border-slate-100 hover:border-slate-200 bg-white hover:bg-slate-50/20 rounded-xl transition-all duration-200`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1.5 mb-2">
+                        <div>
+                          <h3 className={`${tBase} font-bold text-slate-900 leading-tight`}>{job.role[lang]}</h3>
+                          <span style={{ color: tplStyle.primary }} className={`${tSecBody} font-bold`}>
+                            {job.company} • <span className="text-slate-400 font-normal">{job.location}</span>
+                          </span>
+                        </div>
+                        <span 
+                          style={{ 
+                            color: isCurrent ? tplStyle.primary : '#475569', 
+                            backgroundColor: isCurrent ? tplStyle.primaryBg : '#f1f5f9',
+                          }}
+                          className={`self-start ${tSecBody} font-bold px-2 py-0.5 rounded-md`}
+                        >
+                          {job.period[lang]}
+                        </span>
+                      </div>
+
+                      {job.details[lang] && job.details[lang].length > 0 && (
+                        <ul className={`list-disc list-outside pl-3.5 space-y-1 ${tBody} text-slate-650 ${mbItem}`}>
+                          {job.details[lang].map((detail, dIdx) => (
+                            <li key={dIdx} className="leading-relaxed">
+                              {detail}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {job.achievement && job.achievement[lang] && (
+                        <div 
+                          style={{ backgroundColor: `${tplStyle.primary}07`, borderColor: tplStyle.primary }}
+                          className={`border-l-2 ${blockPadding} ${tBody} flex items-start gap-1.5 mt-2 rounded-r-lg`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" style={{ color: tplStyle.primary }} />
+                          <p className="text-slate-650 leading-relaxed font-semibold">
+                            <span className="text-slate-900 font-bold">
+                              {job.achievementLabel?.[lang] || (lang === 'es' ? 'Meta Lograda' : 'Target Achieved')}:
+                            </span>{' '}
+                            {job.achievement[lang]}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </EditableSection>
+
+            {/* FORMACION ACADEMICA */}
+            <EditableSection section="educacion" className="flex flex-col gap-3">
+              <h2 className={`font-black text-slate-900 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-1 text-left ${hSection}`}>
+                <GraduationCap className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Formación & Hitos' : 'Education Highs'}</span>
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {educacion.map((edu) => (
+                  <div key={edu.id} className={`${blockPaddingEdu} border border-slate-100 bg-slate-50/30 rounded-xl flex flex-col gap-1.5`}>
+                    <span 
+                      style={{ color: tplStyle.primary, backgroundColor: tplStyle.primaryBg }}
+                      className={`${tSmall} font-bold px-2 py-0.5 rounded-full inline-block self-start`}
+                    >
+                      {edu.period}
+                    </span>
+                    <h4 className={`${tBody} font-bold text-slate-900 leading-snug`}>{edu.degree[lang]}</h4>
+                    <p className={`${tSecBody} text-slate-500 font-semibold`}>{edu.institution}</p>
+                    
+                    {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
+                      <div className="flex flex-col gap-1 border-t border-slate-150/60 pt-1.5 mt-1.5">
+                        {edu.achievements[lang].map((achievement, aIdx) => (
+                          <div key={aIdx} className={`${tSmall} text-slate-600 flex items-start gap-1`}>
+                            <span style={{ color: tplStyle.primary }} className="font-bold shrink-0">•</span>
+                            <p className="leading-snug">{achievement}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+          </div>
+
+          {/* DYNAMIC COMPETENCIES + CERTIFICATIONS + REFERENCES BAR */}
+          <div className={`md:col-span-4 flex flex-col ${gapSidebar}`}>
+            
+            {/* COMPETENCIAS */}
+            <EditableSection section="competencias" className={`${blockPaddingEdu} bg-slate-50 border border-slate-100 p-4.5 rounded-2xl flex flex-col gap-3`}>
+              <h3 className={`font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5 ${hSection}`}>
+                <Star className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Foco de Desempeño' : 'Core Disciplines'}</span>
+              </h3>
+              <div className="flex flex-wrap gap-1.5">
+                {competencias[lang]?.map((comp, idx) => (
+                  <span
+                    key={idx}
+                    style={{ backgroundColor: tplStyle.badgeBg, color: tplStyle.badgeText }}
+                    className={`px-2.5 py-1.5 rounded-lg ${hBadge} font-bold border border-slate-100 hover:scale-[1.02] transition-transform cursor-default`}
+                  >
+                    {comp}
+                  </span>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* CERTIFICACIONES */}
+            <EditableSection section="certificaciones" className={`${blockPaddingEdu} bg-slate-50 border border-slate-100 p-4.5 rounded-2xl flex flex-col gap-3`}>
+              <h3 className={`font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5 ${hSection}`}>
+                <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Certificaciones' : 'Certifications'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapList}`}>
+                {certificaciones.map((cert) => (
+                  <div 
+                    key={cert.id} 
+                    style={{ borderColor: `${tplStyle.primary}33` }}
+                    className={`pl-2 border-l-2 ${tBody}`}
+                  >
+                    <p className="font-bold text-slate-900 leading-snug">{cert.title[lang]}</p>
+                    <span className={`text-slate-500 font-semibold ${tSecBody}`}>{cert.entity} | {cert.year}</span>
+                  </div>
+                ))}
+              </div>
+            </EditableSection>
+
+            {/* REFERENCIAS */}
+            <EditableSection section="referencias" className={`${blockPaddingEdu} bg-slate-50 border border-slate-100 p-4.5 rounded-2xl flex flex-col gap-3`}>
+              <h3 className={`font-black text-slate-900 uppercase tracking-widest flex items-center gap-1.5 ${hSection}`}>
+                <Award className="w-4 h-4 shrink-0" style={{ color: tplStyle.primary }} />
+                <span>{lang === 'es' ? 'Referencias' : 'References'}</span>
+              </h3>
+              <div className={`flex flex-col ${gapInsideSection}`}>
+                {Array.isArray(referencias) && referencias.length > 0 ? (
+                  referencias.map((ref) => (
+                    <div key={ref.id || Math.random().toString()} className={`${tBody} leading-relaxed`}>
+                      <p className="font-extrabold text-slate-900 text-[12px]">{ref.name}</p>
+                      {ref.role && ref.role[lang] && <p className={`text-slate-650 ${tSecBody}`}>{ref.role[lang]}</p>}
+                      {ref.phone && <p style={{ color: tplStyle.primary }} className={`font-bold ${tSecBody} mt-0.5`}>📞 {ref.phone}</p>}
+                    </div>
+                  ))
+                ) : (
+                  <p className={`opacity-50 italic ${tBody}`}>
+                    {lang === 'es' ? 'Sin referencias' : 'No references'}
+                  </p>
+                )}
+              </div>
+            </EditableSection>
+
+          </div>
+
+        </div>
+        {renderInlineEditor()}
+      </motion.div>
+    );
+  }
+
+  return null;
 }

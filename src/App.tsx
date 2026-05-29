@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { CVData, Language } from './types';
 import { INITIAL_CV_DATA } from './data';
 import CVViewer from './components/CVViewer';
-import CVEditor from './components/CVEditor';
-import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import CVEditor, { TabType } from './components/CVEditor';
+import TemplateSidebar from './components/TemplateSidebar';
+import UserManualModal from './components/UserManualModal';
+import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff, Save, Download, Upload, ShieldCheck, Layers, HelpCircle } from 'lucide-react';
 
 export default function App() {
   // Load initial CV data from localStorage if available, else use baseline data
@@ -22,6 +24,34 @@ export default function App() {
           if (!Array.isArray(parsed.referencias)) {
             parsed.referencias = INITIAL_CV_DATA.referencias;
           }
+          if (!parsed.personalInfo.photoEffect) {
+            parsed.personalInfo.photoEffect = {
+              type: 'malibu',
+              intensity: 35,
+              showFrame: true,
+              frameColor: '#ec4899',
+              frameWidth: 4,
+              shape: 'circle'
+            };
+          } else {
+            const eff = parsed.personalInfo.photoEffect;
+            if (eff.showFrame === undefined) eff.showFrame = true;
+            if (!eff.frameColor) {
+              eff.frameColor = eff.type === 'malibu' 
+                ? '#ec4899' 
+                : eff.type === 'radioactive'
+                ? '#10b981'
+                : eff.type === 'retro'
+                ? '#f97316'
+                : eff.type === 'midnight'
+                ? '#3b82f6'
+                : eff.type === 'chroma'
+                ? '#8b5cf6'
+                : '#e2e8f0';
+            }
+            if (eff.frameWidth === undefined) eff.frameWidth = 4;
+            if (!eff.shape) eff.shape = 'circle';
+          }
           return parsed;
         }
       } catch (e) {
@@ -33,8 +63,11 @@ export default function App() {
 
   const [lang, setLang] = useState<Language>('es');
   const [isEditing, setIsEditing] = useState(false);
+  const [editorActiveTab, setEditorActiveTab] = useState<TabType>('personal');
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isHelpOpen, setIsHelpOpen] = useState(false);
 
   // Sync state to LocalStorage
   useEffect(() => {
@@ -73,6 +106,70 @@ export default function App() {
     );
   };
 
+  // Handle data export as a backup JSON file
+  const handleExportJSON = () => {
+    try {
+      const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+        JSON.stringify(cvData, null, 2)
+      )}`;
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', jsonString);
+      downloadAnchor.setAttribute('download', `CV_${cvData.personalInfo.name.replace(/\s+/g, '_')}_Backup.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      setToastMessage(lang === 'es' ? 'Archivo de respaldo de progreso (.json) descargado con éxito' : 'Progress backup (.json) file downloaded successfully');
+    } catch (e) {
+      console.error(e);
+      setToastMessage(lang === 'es' ? 'Error al exportar el archivo de progreso' : 'Error exporting progress backup');
+    }
+  };
+
+  // Handle data import from a backup JSON file
+  const handleImportJSON = (e: ChangeEvent<HTMLInputElement>) => {
+    const fileReader = new FileReader();
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    fileReader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target?.result as string);
+        if (parsed && parsed.personalInfo && parsed.personalInfo.name) {
+          // Schema normalization / defaults
+          if (!Array.isArray(parsed.referencias)) {
+            parsed.referencias = [];
+          }
+          if (!parsed.personalInfo.photoEffect) {
+            parsed.personalInfo.photoEffect = {
+              type: 'none',
+              intensity: 35,
+              showFrame: true,
+              frameColor: '#ec4899',
+              frameWidth: 4,
+              shape: 'circle'
+            };
+          }
+          setCvData(parsed);
+          setToastMessage(lang === 'es' ? '✔ ¡Progreso importado y restaurado correctamente!' : '✔ Progress successfully imported and restored!');
+        } else {
+          setToastMessage(lang === 'es' ? 'El archivo JSON no tiene un formato válido para esta plantilla.' : 'JSON file has an invalid format for this template.');
+        }
+      } catch (err) {
+        console.error(err);
+        setToastMessage(lang === 'es' ? 'Error al leer el archivo de respaldo.' : 'Error reading the backup file.');
+      }
+    };
+    fileReader.readAsText(files[0]);
+    // Clear input so same file can be loaded again if desired
+    e.target.value = '';
+  };
+
+  // Handle manual trigger showing reassuring toast message
+  const handleManualSave = () => {
+    localStorage.setItem('doctor_cv_data', JSON.stringify(cvData));
+    setToastMessage(lang === 'es' ? '✔ ¡Progreso guardado de forma segura en este navegador!' : '✔ Progress safely saved in this browser!');
+  };
+
   // Handle avatar update from photo selector
   const handleAvatarChange = (newUrl: string) => {
     setCvData(prevDef => ({
@@ -100,17 +197,67 @@ export default function App() {
             <span className="text-slate-300 text-xs font-medium">
               CV: {cvData.personalInfo.name}
             </span>
+            <span className="hidden md:inline-block h-4 w-px bg-slate-700"></span>
+            <div className="hidden md:flex items-center gap-1.5 text-[10px] text-teal-400 bg-teal-400/5 px-2.5 py-1 rounded-full border border-teal-500/10 font-medium select-none">
+              <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+              <span>{lang === 'es' ? 'Autoguardado local activo' : 'Real-time autosave active'}</span>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-end gap-2 text-xs">
+            {/* Quick main templates dropdown selector */}
+            <div className="flex items-center gap-1.5 bg-slate-850 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
+              <span className="text-[10px] uppercase font-bold text-teal-400 select-none">
+                {lang === 'es' ? 'Plantilla:' : 'Theme:'}
+              </span>
+              <select
+                value={cvData.templateId || 'jorge'}
+                onChange={(e) => {
+                  const id = e.target.value;
+                  setCvData((prev) => ({ ...prev, templateId: id }));
+                  setToastMessage(lang === 'es' ? '✔ ¡Diseño de plantilla aplicado!' : '✔ Template style applied!');
+                }}
+                className="bg-transparent border-0 text-white font-bold py-0.5 focus:outline-none cursor-pointer pr-1 text-xs"
+              >
+                <option value="jorge" className="bg-slate-900">{lang === 'es' ? 'Jorge (Clásico)' : 'Jorge (Classic)'}</option>
+                <option value="academia" className="bg-slate-900">{lang === 'es' ? 'Academia Lora' : 'Academia Lora'}</option>
+                <option value="executive" className="bg-slate-900">{lang === 'es' ? 'Prestige Ejecutivo' : 'Prestige Exec.'}</option>
+                <option value="modern" className="bg-slate-900">{lang === 'es' ? 'Clínico Moderno' : 'Modern Clinical'}</option>
+              </select>
+            </div>
+
+            {/* Dynamic Template Preset Drawer Trigger */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-850 hover:bg-slate-850/80 hover:text-white text-slate-100 border border-slate-800 transition-colors cursor-pointer font-bold relative"
+              title={lang === 'es' ? 'Elegir uno de los 30 diseños de plantilla' : 'Browse through 30 specialized template designs'}
+            >
+              <Layers className="w-3.5 h-3.5 text-teal-400" />
+              <span>{lang === 'es' ? 'Diseño de Hoja (30)' : 'CV Designs (30)'}</span>
+              <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500"></span>
+              </span>
+            </button>
+
             {/* Language Switcher */}
             <button
               onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-850 hover:bg-slate-800 text-slate-100 hover:text-white border border-slate-800 transition-colors cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-850 hover:bg-slate-850/80 text-slate-100 hover:text-white border border-slate-800 transition-colors cursor-pointer"
               title={lang === 'es' ? 'Cambiar a Inglés' : 'Cambiar a Español'}
             >
               <Globe className="w-3.5 h-3.5 text-teal-400" />
               <span className="font-semibold">{lang === 'es' ? 'English' : 'Español'}</span>
+            </button>
+
+            {/* Minimalist Help/Instrucciones Trigger */}
+            <button
+              onClick={() => setIsHelpOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-950/40 hover:bg-slate-850 text-indigo-300 hover:text-white border border-indigo-900/65 transition-colors cursor-pointer"
+              title={lang === 'es' ? 'Guía de inicio y manual de ayuda sencillo' : 'Friendly how-to instructions & guide'}
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-indigo-400" />
+              <span className="font-semibold">{lang === 'es' ? 'Ayuda ❓' : 'Help ❓'}</span>
             </button>
 
             {/* Print Trigger */}
@@ -129,7 +276,7 @@ export default function App() {
                 const nextState = !isPreviewMode;
                 setIsPreviewMode(nextState);
                 if (nextState) {
-                  setIsEditing(false);
+                   setIsEditing(false);
                 }
               }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold transition-colors border cursor-pointer ${
@@ -187,24 +334,182 @@ export default function App() {
         
         {/* INTERACTIVE HEADER CARD WITH QUICK GUIDE (Hidden in Preview Mode) */}
         {!isPreviewMode && (
-          <div className="bg-gradient-to-r from-slate-900 to-indigo-950 p-6 rounded-2xl border border-slate-800/80 shadow-md flex items-center justify-between gap-6 flex-col md:flex-row print:hidden">
-            <div className="flex flex-col gap-1 md:text-left text-center">
-              <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight flex items-center justify-center md:justify-start gap-1.5">
-                <span>{lang === 'es' ? 'Currículum Profesional Interactivo' : 'Interactive Professional Resume'}</span>
-              </h1>
-              <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-                {lang === 'es'
-                  ? 'Diseño moderno, limpio y de alta legibilidad inspirado exactamente en el perfil médico del Dr. Jorge Andrés. Puedes traducirlo a inglés con un clic, cambiar la foto, editar los textos y guardarlo como PDF listo para enviar.'
-                  : 'Modern, clean, high-readability design precisely inspired by Dr. Jorge Andrés\' medical profile. Translate to English with one click, change the photo, edit descriptions, and save as PDF ready to send.'}
-              </p>
-            </div>
-            <div className="flex gap-2.5 shrink-0">
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 rounded-2xl border border-slate-800/80 shadow-md flex flex-col gap-5 print:hidden">
+            {/* ROW 1: Title and Central Customize Toggle */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-800/50">
+              <div className="flex flex-col gap-1 md:text-left text-center">
+                <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight flex items-center justify-center md:justify-start gap-2">
+                  <span className="flex h-2.5 w-2.5 rounded-full bg-teal-400 animate-pulse shrink-0"></span>
+                  <span>{lang === 'es' ? 'Currículum Profesional Interactivo' : 'Interactive Professional Resume'}</span>
+                </h1>
+                <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+                  {lang === 'es'
+                    ? 'Estructura médica optimizada de alta legibilidad. Traduce al instante, edita textos mediante clics en la tarjeta y descarga tu PDF final.'
+                    : 'Optimized medical structure with high readability. Translate instantly, click elements to edit text dynamically, and download your final PDF.'}
+                </p>
+              </div>
+
+              {/* Central Customization Switcher */}
               <button
-                onClick={() => setIsEditing(true)}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700/80 text-white text-xs font-bold rounded-xl border border-slate-700 transition-colors cursor-pointer"
+                onClick={() => {
+                  const nextState = !isEditing;
+                  setIsEditing(nextState);
+                  if (nextState) {
+                    setIsPreviewMode(false);
+                  }
+                }}
+                className={`w-full md:w-auto px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 border shadow-lg shrink-0 ${
+                  isEditing
+                    ? 'bg-teal-500 text-slate-950 border-teal-400 hover:bg-teal-400 shadow-teal-500/10'
+                    : 'bg-indigo-600 hover:bg-indigo-505 text-white border-indigo-500 shadow-indigo-950/40'
+                }`}
               >
-                {lang === 'es' ? 'Personalizar Textos' : 'Customize Texts'}
+                <Edit3 className="w-4 h-4" />
+                <span>
+                  {isEditing 
+                    ? (lang === 'es' ? 'Finalizar Edición ✔' : 'Finish Editing ✔') 
+                    : (lang === 'es' ? 'Editar Contenido 📝' : 'Edit Content 📝')}
+                </span>
               </button>
+            </div>
+
+            {/* ROW 2: Multi-column grid containing Templates Panel and File Actions Panel */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              {/* LEFT PANEL: Core layout switcher dropdown and preset library */}
+              <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/50 flex flex-col justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <Layers className="w-4 h-4 text-teal-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      {lang === 'es' ? 'Diseño y Plantillas Principales' : 'Design & Core Templates'}
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-400 mt-1">
+                    {lang === 'es'
+                      ? 'Visualiza tus cambios al instante rotando sobre las 4 plantillas claves recomendadas para el sector salud.'
+                      : 'Instantly view your changes by switching between the 4 core clinical layouts recommended for healthcare.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2.5 mt-1.5">
+                  {/* Dropdown Menu for the 4 main templates */}
+                  <div className="flex-1 flex flex-col gap-1">
+                    <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wide pl-1">
+                      {lang === 'es' ? 'Alternar Estructura' : 'Change Structure'}
+                    </span>
+                    <select
+                      value={cvData.templateId || 'jorge'}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setCvData((prev) => ({ ...prev, templateId: id }));
+                        setToastMessage(lang === 'es' ? '✔ ¡Diseño de plantilla aplicado!' : '✔ Template style applied!');
+                      }}
+                      className="w-full bg-slate-900 border border-slate-800 text-xs text-white rounded-lg px-3 py-2.5 focus:outline-none focus:border-teal-500 cursor-pointer font-bold"
+                    >
+                      <option value="jorge">👉 {lang === 'es' ? 'Jorge (Clásico Médico)' : 'Jorge (Clinical Classic)'}</option>
+                      <option value="academia">👉 {lang === 'es' ? 'Academia Lora (Solemne)' : 'Academia (Academic Serif)'}</option>
+                      <option value="executive">👉 {lang === 'es' ? 'Prestige Ejecutivo (Liderazgo)' : 'Prestige (Executive Banner)'}</option>
+                      <option value="modern">👉 {lang === 'es' ? 'Clínico Moderno (Bento Rejilla)' : 'Clinical (Modern Bento)'}</option>
+                    </select>
+                  </div>
+
+                  {/* Sidebar preset catalog selector */}
+                  <div className="flex flex-col gap-1 justify-end">
+                    <span className="text-[9px] text-slate-500 uppercase font-bold tracking-wide pl-1">
+                      {lang === 'es' ? 'Catálogo Completo' : 'Complete Catalog'}
+                    </span>
+                    <button
+                      onClick={() => setIsSidebarOpen(true)}
+                      className="px-4 py-2.5 bg-slate-900 hover:bg-slate-850 text-slate-200 hover:text-white text-xs font-bold rounded-lg border border-slate-800 transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                      title={lang === 'es' ? 'Ver los 30 diseños de catálogo' : 'Explore the full list of 30 designs'}
+                    >
+                      <Layers className="w-3.5 h-3.5 text-teal-400 animate-pulse" />
+                      <span>{lang === 'es' ? 'Más Diseños (30)' : 'More Styles (30)'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT PANEL: Data persistence backup tools */}
+              <div className="bg-slate-950/40 p-4 rounded-xl border border-slate-800/50 flex flex-col justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-slate-200">
+                    <Save className="w-4 h-4 text-emerald-400" />
+                    <span className="text-xs font-bold uppercase tracking-wider">
+                      {lang === 'es' ? 'Archivo & Respaldo de Progreso' : 'Backup & Progress Archiving'}
+                    </span>
+                  </div>
+                  <p className="text-[10.5px] text-slate-400 mt-1">
+                    {lang === 'es'
+                      ? 'Guarda localmente en tu navegador de forma segura o exporta tus datos modificados en archivo .json.'
+                      : 'Safely save your progress locally or download your formulated resume data as a portable .json backup file.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 mt-1.5">
+                  {/* Manual Save */}
+                  <button
+                    onClick={handleManualSave}
+                    className="px-2 py-2 bg-slate-900 border border-slate-800 hover:border-emerald-500/40 hover:bg-emerald-500/5 text-slate-200 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    title={lang === 'es' ? 'Asegurar progreso de edición actual' : 'Commit work locally'}
+                  >
+                    <Save className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>{lang === 'es' ? 'Guardar' : 'Save'}</span>
+                  </button>
+
+                  {/* Export file */}
+                  <button
+                    onClick={handleExportJSON}
+                    className="px-2 py-2  bg-slate-900 border border-slate-800 hover:border-teal-500/40 hover:bg-teal-500/5 text-slate-200 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
+                    title={lang === 'es' ? 'Descargar respaldo .json en tu computadora' : 'Save as .json copy'}
+                  >
+                    <Download className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                    <span>{lang === 'es' ? 'Exportar' : 'Export'}</span>
+                  </button>
+
+                  {/* Import file */}
+                  <label
+                    className="px-2 py-2 bg-slate-900 border border-slate-800 hover:border-amber-500/40 hover:bg-amber-500/5 text-slate-200 hover:text-white text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-sm relative text-center"
+                    title={lang === 'es' ? 'Cargar un archivo de progreso guardado anteriormente' : 'Upload backup JSON file'}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>{lang === 'es' ? 'Cargar' : 'Import'}</span>
+                    <input
+                      type="file"
+                      accept=".json"
+                      onChange={handleImportJSON}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                  </label>
+                </div>
+              </div>
+
+            </div>
+
+            {/* LOWER STATS AND UTILITIES */}
+            <div className="flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 pt-1.5 border-t border-slate-800/25 mt-1">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span>{lang === 'es' ? 'Panel central de visualización sincronizado en tiempo real' : 'Central visualization sync engine active'}</span>
+              </div>
+              <div className="flex items-center gap-4 mt-2 sm:mt-0">
+                <button
+                  onClick={() => setIsHelpOpen(true)}
+                  className="text-[11px] font-bold text-teal-405 hover:text-teal-300 hover:underline transition-colors flex items-center gap-1 cursor-pointer"
+                  title={lang === 'es' ? '¿Cómo funciona todo? Ver instrucciones paso a paso' : 'How does it work? View step-by-step instructions'}
+                >
+                  <HelpCircle className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                  <span>{lang === 'es' ? 'Instructivo de Ayuda 💡' : 'User Help Guide 💡'}</span>
+                </button>
+                <span className="text-slate-850">|</span>
+                <button 
+                  onClick={handleResetData}
+                  className="text-[11px] font-bold text-red-500/80 hover:text-red-400 hover:underline transition-colors"
+                >
+                  {lang === 'es' ? '¿Restablecer datos originales desde cero? ↺' : 'Restore base template values ↺'}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -253,6 +558,8 @@ export default function App() {
               data={cvData}
               onChange={setCvData}
               onClose={() => setIsEditing(false)}
+              activeTab={editorActiveTab}
+              setActiveTab={setEditorActiveTab}
             />
           </div>
         )}
@@ -261,9 +568,29 @@ export default function App() {
         <div className={`flex-1 flex justify-center items-start transition-all duration-350`}>
           <CVViewer
             data={cvData}
+            onChange={setCvData}
             lang={lang}
             onAvatarChange={isPreviewMode ? undefined : handleAvatarChange}
             forcePrintLayout={isPreviewMode}
+            onEditSection={(section) => {
+              setEditorActiveTab(section as TabType);
+              setIsEditing(true);
+              setIsPreviewMode(false);
+              setToastMessage(
+                lang === 'es'
+                  ? `✏️ Se abrió el editor para: ${
+                      section === 'personal' ? 'Información Personal' : 
+                      section === 'competencias' ? 'Competencias/Habilidades' : 
+                      section === 'perfil' ? 'Resumen de Perfil' : 
+                      section === 'experiencia' ? 'Experiencia Médica' : 
+                      section === 'certificaciones' ? 'Certificados y Cursos' : 
+                      section === 'educacion' ? 'Educación Médica' : 
+                      section === 'referencias' ? 'Referencias Clínicas/Personales' : 
+                      'Estilos y Ajustes'
+                    }`
+                  : `✏️ Opened editor panel for: ${section}`
+              );
+            }}
           />
         </div>
       </section>
@@ -279,6 +606,25 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* SPECIALIZED LATERAL DESIGN DRAWER (30 PRESETS) */}
+      <TemplateSidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        selectedTemplateId={cvData.templateId || 'jorge'}
+        onSelectTemplate={(id) => {
+          setCvData((prev) => ({ ...prev, templateId: id }));
+          setToastMessage(lang === 'es' ? '✔ ¡Diseño de plantilla aplicado!' : '✔ Template style applied!');
+        }}
+        lang={lang}
+      />
+
+      {/* DETAILED USER HELP MANUAL MODAL */}
+      <UserManualModal
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        lang={lang}
+      />
     </main>
   );
 }

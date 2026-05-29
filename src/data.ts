@@ -6,6 +6,10 @@
 import { CVData } from './types';
 
 export const INITIAL_CV_DATA: CVData = {
+  templateId: 'jorge',
+  fontFamily: 'Inter',
+  spacingMode: 'balanced',
+  baseFontSize: 'normal',
   personalInfo: {
     name: "Dr. Jorge Andrés Barrios Durán",
     titles: {
@@ -15,7 +19,15 @@ export const INITIAL_CV_DATA: CVData = {
     location: "Laureles, Medellín",
     phone: "+57 300 609 8075",
     email: "jabarrios92@gmail.com",
-    avatarUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=350&auto=format&fit=crop"
+    avatarUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=350&auto=format&fit=crop",
+    photoEffect: {
+      type: 'malibu',
+      intensity: 35,
+      showFrame: true,
+      frameColor: '#ec4899',
+      frameWidth: 4,
+      shape: 'circle'
+    }
   },
   perfil: {
     es: "Médico general bilingüe (Inglés C1) egresado de la Universidad de Antioquia con más de 6 años de experiencia clínica. Destaco por mi solidez en el manejo integral de pacientes en servicios de urgencias, hospitalización y atención médica domiciliaria de alta complejidad. Me distingo por mi capacidad analítica para la toma de decisiones críticas bajo presión, mi liderazgo en la atención prehospitalaria y mi enfoque centrado en la humanización del paciente.",
@@ -191,7 +203,17 @@ export const INITIAL_CV_DATA: CVData = {
         en: "Medicine and Surgery (MD)"
       },
       institution: "Universidad de Antioquia",
-      period: "2010 - 2016"
+      period: "2010 - 2016",
+      achievements: {
+        es: [
+          "Internado rotatorio con énfasis en Cuidados Intensivos y Urgencias Médicas.",
+          "Distinguido por el excelente desempeño clínico e iniciativa académica."
+        ],
+        en: [
+          "Rotary internship with an emphasis on Intensive Care and Medical Emergencies.",
+          "Recognized for excellent clinical performance and academic initiative."
+        ]
+      }
     },
     {
       id: "edu2",
@@ -200,7 +222,15 @@ export const INITIAL_CV_DATA: CVData = {
         en: "C1 Advanced English Certification"
       },
       institution: "Kaplan International Languages, Australia",
-      period: "2017 - 2018"
+      period: "2017 - 2018",
+      achievements: {
+        es: [
+          "Estudios nivel Avanzado (C1) bajo inmersión cultural y académica completa."
+        ],
+        en: [
+          "Advanced Level (C1) studies under full academic and cultural immersion."
+        ]
+      }
     }
   ]
 };

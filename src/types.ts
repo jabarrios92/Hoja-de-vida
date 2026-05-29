@@ -31,6 +31,7 @@ export interface Experiencia {
   period: TranslationMap;
   details: TranslationMap<string[]>;
   achievement?: TranslationMap;
+  achievementLabel?: TranslationMap;
 }
 
 export interface Educacion {
@@ -38,9 +39,23 @@ export interface Educacion {
   degree: TranslationMap;
   institution: string;
   period: string;
+  achievements?: TranslationMap<string[]>;
+}
+
+export interface PhotoEffect {
+  type: 'none' | 'malibu' | 'radioactive' | 'retro' | 'midnight' | 'chroma';
+  intensity: number;
+  showFrame?: boolean;
+  frameColor?: string;
+  frameWidth?: number; // thickness in pixels (0 to 12)
+  shape?: 'circle' | 'oval' | 'square' | 'rounded-square' | 'rectangular';
 }
 
 export interface CVData {
+  fontFamily?: string;
+  templateId?: string;
+  spacingMode?: 'compact' | 'balanced' | 'spacious';
+  baseFontSize?: 'small' | 'normal' | 'large';
   personalInfo: {
     name: string;
     titles: TranslationMap;
@@ -48,6 +63,7 @@ export interface CVData {
     phone: string;
     email: string;
     avatarUrl: string;
+    photoEffect?: PhotoEffect;
   };
   perfil: TranslationMap;
   competencias: TranslationMap<string[]>;
