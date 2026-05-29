@@ -1475,7 +1475,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
      LAYOUT VARIANT 1: 'jorge' (THE SIDEBAR COLUMN LAYOUT)
      ========================================================================= */
   if (activeLayout === 'jorge') {
-    const itemCircleOffset = spacing === 'compact' ? '-left-[20px] top-1' : spacing === 'spacious' ? '-left-[40px] top-2' : '-left-[31px] top-1.5';
+    const itemCircleOffset = '-left-[32px] top-[6.5px]';
     return (
       <motion.div
         id="cv-print-area"
@@ -1485,23 +1485,21 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         style={{ fontFamily: rootFontFamily }}
         className={`w-full max-w-5xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden print:shadow-none print:rounded-none min-h-[1414px] aspect-[1/1.414] ${
           forcePrintLayout 
-            ? 'grid grid-cols-12 !rounded-none shadow-xl border border-slate-200' 
-            : 'grid grid-cols-1 md:grid-cols-12'
+            ? 'grid grid-cols-[30%_70%] !rounded-none shadow-xl border border-slate-200' 
+            : 'grid grid-cols-1 md:grid-cols-[30%_70%]'
         }`}
       >
         {/* LEFT COLUMN: Sidebar (Thematic background) */}
         <div 
           id="cv-sidebar" 
           style={{ backgroundColor: tplStyle.sidebarBg, color: tplStyle.sidebarText }}
-          className={`${paddingSidebar} flex flex-col ${gapSidebar} print:col-span-3 ${
-            forcePrintLayout ? 'col-span-3' : 'md:col-span-3'
-          }`}
+          className={`${paddingSidebar} flex flex-col ${gapSidebar} h-full`}
         >
-          {/* Avatar rendering from shared helper with 10% size boost */}
+          {/* Avatar rendering from shared helper with 10% size decrease */}
           {renderAvatar(
             shape === 'oval' || shape === 'rectangular'
-              ? 'w-[162px] h-[202px] md:w-[182px] md:h-[222px]'
-              : 'w-[182px] h-[182px] md:w-[202px] md:h-[202px] aspect-square'
+              ? 'w-[146px] h-[182px] md:w-[164px] md:h-[200px]'
+              : 'w-[164px] h-[164px] md:w-[182px] md:h-[182px] aspect-square'
           )}
 
           {/* CONTACT INFO */}
@@ -1583,7 +1581,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           <EditableSection section="referencias" className="flex flex-col gap-4 pt-6 border-t border-slate-700/80">
             <h3 
               style={{ color: tplStyle.sidebarAccent }}
-              className={`font-bold tracking-wider ${tBase} uppercase`}
+              className={`font-bold tracking-wider ${tBase} uppercase opacity-90`}
             >
               {lang === 'es' ? 'Referencias' : 'References'}
             </h3>
@@ -1591,15 +1589,15 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               {Array.isArray(referencias) && referencias.length > 0 ? (
                 referencias.map((ref) => (
                   <div key={ref.id || Math.random().toString()} className={`flex flex-col ${tBody} leading-relaxed`}>
-                    <span className={`font-bold text-white ${tBody} tracking-wide`}>{ref.name}</span>
+                    <span className={`font-semibold text-slate-300 ${tBody} tracking-wide`}>{ref.name}</span>
                     {ref.role && ref.role[lang] && (
-                      <span className="text-slate-200 font-medium mt-0.5">{ref.role[lang]}</span>
+                      <span className="text-slate-450 text-xs font-normal mt-0.5 opacity-80">{ref.role[lang]}</span>
                     )}
                     {(ref.institution || ref.phone) && (
-                      <span className="opacity-75 font-normal mt-0.5 flex flex-wrap items-center">
+                      <span className="text-slate-455 text-xs font-normal opacity-75 mt-0.5 flex flex-wrap items-center">
                         {ref.institution && <span>{ref.institution}</span>}
                         {ref.institution && ref.phone && <span className="mx-1.5 opacity-40">|</span>}
-                        {ref.phone && <span style={{ color: tplStyle.sidebarAccent }} className="font-semibold">{ref.phone}</span>}
+                        {ref.phone && <span className="opacity-80 font-medium text-slate-300">{ref.phone}</span>}
                       </span>
                     )}
                   </div>
@@ -1616,9 +1614,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         {/* RIGHT COLUMN: Professional Summary + Experience + Education */}
         <div 
           id="cv-main-body" 
-          className={`${paddingMain} flex flex-col ${gapSection} text-slate-850 bg-white print:col-span-9 ${
-            forcePrintLayout ? 'col-span-9' : 'md:col-span-9'
-          }`}
+          className={`${paddingMain} flex flex-col ${gapSection} text-slate-850 bg-white h-full`}
         >
           {/* HEADER AREA */}
           <EditableSection section="personal" className="flex flex-col gap-2">
@@ -1675,7 +1671,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               <h2>{lang === 'es' ? 'Experiencia Profesional' : 'Work Experience'}</h2>
             </div>
 
-            <div className={`relative border-l-2 border-slate-100 ml-3.5 pl-6 flex flex-col ${gapSection}`}>
+            <div className={`relative border-l-2 border-slate-300/85 ml-3.5 pl-6 flex flex-col ${gapSection}`}>
               {experiencia.map((job) => {
                 const isCurrent = job.period.es.toLowerCase().includes('actual') || 
                                  job.period.en.toLowerCase().includes('present');
@@ -1688,7 +1684,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                     {/* Connector Dot */}
                     <span 
                       style={{ borderColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
-                      className={`absolute ${itemCircleOffset} w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center shadow-sm transition-colors duration-200`}
+                      className={`absolute ${itemCircleOffset} w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center shadow-md transition-colors duration-200`}
                     >
                       <span 
                         style={{ backgroundColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
@@ -1703,9 +1699,9 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         </h3>
                         <p 
                           style={{ color: tplStyle.primary }}
-                          className={`${tSecBody} font-semibold`}
+                          className={`${tSecBody} text-[13.5px] md:text-[15px] font-bold`}
                         >
-                          {job.company} <span className="text-slate-400 font-normal">| {job.location}</span>
+                          {job.company} <span className="text-slate-400/90 font-medium text-xs md:text-[13px]">| {job.location}</span>
                         </p>
                       </div>
                       {/* Date Pill */}

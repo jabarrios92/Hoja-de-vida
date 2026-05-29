@@ -10,7 +10,7 @@ import CVViewer from './components/CVViewer';
 import CVEditor, { TabType } from './components/CVEditor';
 import TemplateSidebar from './components/TemplateSidebar';
 import UserManualModal from './components/UserManualModal';
-import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff, Save, Download, Upload, ShieldCheck, Layers, HelpCircle } from 'lucide-react';
+import { Printer, Edit3, Globe, RotateCcw, FileText, CheckCircle, Eye, EyeOff, Save, Download, Upload, ShieldCheck, Layers, HelpCircle, Type } from 'lucide-react';
 
 export default function App() {
   // Load initial CV data from localStorage if available, else use baseline data
@@ -68,6 +68,7 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [showFloatingFontSelector, setShowFloatingFontSelector] = useState(false);
 
   // Sync state to LocalStorage
   useEffect(() => {
@@ -606,6 +607,89 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      {/* FLOATING MINIMALIST FONT SELECTOR ON THE LEFT (Hidden during printing) */}
+      <div className="fixed left-5 top-[40%] -translate-y-1/2 z-40 print:hidden hidden lg:flex flex-col items-start">
+        {/* Toggle bubble button */}
+        <button
+          onClick={() => setShowFloatingFontSelector(!showFloatingFontSelector)}
+          className={`flex items-center gap-2 p-3.5 rounded-2xl border transition-all duration-300 shadow-2xl cursor-pointer ${
+            showFloatingFontSelector 
+              ? 'bg-teal-500 text-slate-950 border-teal-400 scale-105' 
+              : 'bg-slate-900/95 hover:bg-slate-850 text-slate-300 hover:text-white border-slate-800'
+          }`}
+          title={lang === 'es' ? 'Cambiar tipo de letra' : 'Change font face'}
+        >
+          <Type className={`w-5 h-5 shrink-0 ${showFloatingFontSelector ? 'text-slate-950' : 'text-teal-400'}`} />
+          <span className="text-[11px] font-black tracking-wider uppercase select-none pr-1">
+            {lang === 'es' ? 'Tipografía' : 'Font Face'}
+          </span>
+        </button>
+
+        {/* Dropdown panel when opened */}
+        {showFloatingFontSelector && (
+          <div className="absolute left-0 top-[56px] bg-slate-900/95 backdrop-blur-md border border-slate-800/90 rounded-2xl p-4 shadow-2xl w-64 flex flex-col gap-2">
+            <div className="border-b border-slate-800 pb-2 mb-1 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-teal-400 uppercase tracking-widest">
+                {lang === 'es' ? 'Fuentes del Currículum' : 'Resume Web Fonts'}
+              </span>
+              <span className="text-[9px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded uppercase font-mono font-bold">
+                Ajuste Real
+              </span>
+            </div>
+
+            {[
+              { id: 'Inter', name: 'Inter', desc: lang === 'es' ? 'Suizo, limpio y moderno' : 'Swiss modern style' },
+              { id: 'Roboto', name: 'Roboto', desc: lang === 'es' ? 'Geométrico y adaptable' : 'Geometric & legible' },
+              { id: 'Outfit', name: 'Outfit', desc: lang === 'es' ? 'Circular y tecnológico' : 'Tech-forward circle style' },
+              { id: 'Playfair Display', name: 'Playfair Display', desc: lang === 'es' ? 'Académico de gran elegancia' : 'Academic & elegant' },
+              { id: 'Lora', name: 'Lora', desc: lang === 'es' ? 'Clásico e intelectual' : 'Classic & intellectual' },
+              { id: 'Merriweather', name: 'Merriweather', desc: lang === 'es' ? 'Excelente legibilidad en pantalla' : 'Robust screen legible' }
+            ].map((font) => {
+              const isActive = (cvData.fontFamily || 'Inter') === font.id;
+              return (
+                <button
+                  key={font.id}
+                  onClick={() => {
+                    setCvData(prev => ({ ...prev, fontFamily: font.id }));
+                    setToastMessage(
+                      lang === 'es' 
+                        ? `✔ ¡Tipografía aplicada: ${font.id}!` 
+                        : `✔ Font applied: ${font.id}!`
+                    );
+                  }}
+                  className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all duration-200 cursor-pointer text-left border ${
+                    isActive 
+                      ? 'bg-slate-800 border-teal-500/40 text-teal-400' 
+                      : 'bg-slate-950/20 hover:bg-slate-950 border-transparent text-slate-355 hover:text-white'
+                  }`}
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <span 
+                      className={`text-xs font-bold`}
+                      style={{ 
+                        fontFamily: font.id === 'Inter' ? '"Inter", sans-serif' :
+                                    font.id === 'Roboto' ? '"Roboto", sans-serif' :
+                                    font.id === 'Outfit' ? '"Outfit", sans-serif' :
+                                    font.id === 'Playfair Display' ? '"Playfair Display", serif' :
+                                    font.id === 'Lora' ? '"Lora", serif' : '"Merriweather", serif'
+                      }}
+                    >
+                      {font.name}
+                    </span>
+                    <span className="text-[9.5px] text-slate-500 font-normal line-clamp-1">
+                      {font.desc}
+                    </span>
+                  </div>
+                  {isActive && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-teal-400 animate-pulse"></span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* SPECIALIZED LATERAL DESIGN DRAWER (30 PRESETS) */}
       <TemplateSidebar
