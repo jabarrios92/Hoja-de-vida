@@ -5,7 +5,7 @@
 
 import { useState } from 'react';
 import { CVData, Experiencia, Certificacion, Educacion, Referencia } from '../types';
-import { Plus, Trash2, Check, Sparkles, User, FileText, Briefcase, GraduationCap, Award, Users, Palette, Sliders, Layers, Camera, Maximize2 } from 'lucide-react';
+import { Plus, Trash2, Check, Sparkles, User, FileText, Briefcase, GraduationCap, Award, Users, Palette, Sliders, Layers, Camera, Maximize2, ChevronUp, ChevronDown } from 'lucide-react';
 import { RichInput, RichTextarea } from './RichInput';
 
 interface CVEditorProps {
@@ -348,6 +348,44 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
     onChange({
       ...data,
       educacion: data.educacion.filter((item) => item.id !== id)
+    });
+  };
+
+  const moveItem = (arrayName: 'experiencia' | 'educacion' | 'certificaciones' | 'referencias', index: number, direction: 'up' | 'down') => {
+    const newArray = [...data[arrayName]];
+    if (direction === 'up' && index > 0) {
+      [newArray[index - 1], newArray[index]] = [newArray[index], newArray[index - 1]];
+    } else if (direction === 'down' && index < newArray.length - 1) {
+      [newArray[index + 1], newArray[index]] = [newArray[index], newArray[index + 1]];
+    } else {
+      return;
+    }
+    onChange({
+      ...data,
+      [arrayName]: newArray
+    });
+  };
+
+  const moveCompetencia = (index: number, direction: 'up' | 'down') => {
+    const newEs = [...data.competencias.es];
+    const newEn = [...data.competencias.en];
+
+    if (direction === 'up' && index > 0) {
+      [newEs[index - 1], newEs[index]] = [newEs[index], newEs[index - 1]];
+      [newEn[index - 1], newEn[index]] = [newEn[index], newEn[index - 1]];
+    } else if (direction === 'down' && index < newEs.length - 1) {
+      [newEs[index + 1], newEs[index]] = [newEs[index], newEs[index + 1]];
+      [newEn[index + 1], newEn[index]] = [newEn[index], newEn[index + 1]];
+    } else {
+      return;
+    }
+
+    onChange({
+      ...data,
+      competencias: {
+        es: newEs,
+        en: newEn
+      }
     });
   };
 
@@ -1165,17 +1203,38 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
             <div className="flex flex-col gap-2 bg-slate-900 p-4 rounded-xl border border-slate-800 max-h-60 overflow-y-auto">
               {data.competencias.es.map((compEs, idx) => (
                 <div key={idx} className="flex items-center justify-between gap-4 p-2 rounded-lg bg-slate-950 border border-slate-850/50">
-                  <div className="flex flex-col gap-0.5 text-xs">
+                  <div className="flex flex-col gap-0.5 text-xs flex-1">
                     <span className="text-white"><strong className="text-teal-400 text-[10px] uppercase">ES:</strong> {compEs}</span>
                     <span className="text-slate-400"><strong className="text-teal-400 text-[10px] uppercase">EN:</strong> {data.competencias.en[idx]}</span>
                   </div>
-                  <button
-                    onClick={() => handleRemoveCompetencia(idx)}
-                    className="p-1 px-1.5 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all duration-150"
-                    title="Eliminar Competencia"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => moveCompetencia(idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-all duration-150"
+                      title="Subir"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveCompetencia(idx, 'down')}
+                      disabled={idx === data.competencias.es.length - 1}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-all duration-150"
+                      title="Bajar"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCompetencia(idx)}
+                      className="p-1 px-1.5 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-all duration-150"
+                      title="Eliminar Competencia"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))}
               {data.competencias.es.length === 0 && (
@@ -1235,16 +1294,36 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
             </div>
 
             <div className="flex flex-col gap-6 max-h-[500px] overflow-y-auto pr-2">
-              {data.experiencia.map((job) => (
+              {data.experiencia.map((job, idx) => (
                 <div key={job.id} className="p-4 rounded-xl border border-slate-850 bg-slate-900/40 relative flex flex-col gap-4 mb-1">
-                  {/* Remove Button */}
-                  <button
-                    onClick={() => handleRemoveExperience(job.id)}
-                    className="absolute top-4 right-4 p-1 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-transform"
-                    title="Eliminar Experiencia"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => moveItem('experiencia', idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Subir"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveItem('experiencia', idx, 'down')}
+                      disabled={idx === data.experiencia.length - 1}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Bajar"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveExperience(job.id)}
+                      className="p-1 rounded-md hover:bg-red-500/20 text-slate-400 hover:text-red-400 transition-transform"
+                      title="Eliminar Experiencia"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Company and Location */}
@@ -1466,14 +1545,35 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
             </div>
 
             <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2">
-              {data.certificaciones.map((cert) => (
+              {data.certificaciones.map((cert, idx) => (
                 <div key={cert.id} className="p-4 rounded-xl border border-slate-850 bg-slate-900/40 relative flex flex-col gap-3">
-                  <button
-                    onClick={() => handleRemoveCertificacion(cert.id)}
-                    className="absolute top-4 right-4 p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => moveItem('certificaciones', idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Subir"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveItem('certificaciones', idx, 'down')}
+                      disabled={idx === data.certificaciones.length - 1}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Bajar"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveCertificacion(cert.id)}
+                      className="p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
@@ -1547,14 +1647,35 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
             </div>
 
             <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2">
-              {data.educacion.map((edu) => (
+              {data.educacion.map((edu, idx) => (
                 <div key={edu.id} className="p-4 rounded-xl border border-slate-850 bg-slate-900/40 relative flex flex-col gap-3">
-                  <button
-                    onClick={() => handleRemoveEducacion(edu.id)}
-                    className="absolute top-4 right-4 p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => moveItem('educacion', idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Subir"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveItem('educacion', idx, 'down')}
+                      disabled={idx === data.educacion.length - 1}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Bajar"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleRemoveEducacion(edu.id)}
+                      className="p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5">
@@ -1688,16 +1809,37 @@ export default function CVEditor({ data, onChange, onClose, activeTab: propsActi
             </div>
 
             <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2">
-              {Array.isArray(data.referencias) && data.referencias.map((ref) => (
+              {Array.isArray(data.referencias) && data.referencias.map((ref, idx) => (
                 <div key={ref.id} className="p-4 rounded-xl border border-slate-850 bg-slate-900/40 relative flex flex-col gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveReferencia(ref.id)}
-                    className="absolute top-4 right-4 p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all cursor-pointer"
-                    title="Eliminar referencia"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => moveItem('referencias', idx, 'up')}
+                      disabled={idx === 0}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Subir"
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveItem('referencias', idx, 'down')}
+                      disabled={idx === data.referencias.length - 1}
+                      className="p-1 rounded-md hover:bg-slate-800 text-slate-400 disabled:opacity-30 transition-transform"
+                      title="Bajar"
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveReferencia(ref.id)}
+                      className="p-1 hover:bg-red-500/20 text-slate-400 hover:text-red-400 rounded-md transition-all cursor-pointer"
+                      title="Eliminar referencia"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-1.5 col-span-1 md:col-span-2">

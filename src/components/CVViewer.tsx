@@ -1610,7 +1610,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
           )}
 
           {/* CONTACT INFO */}
-          <EditableSection section="personal" className="flex flex-col gap-4">
+          <EditableSection section="personal" className="flex flex-col gap-4 mt-2">
             <h3 
               style={{ color: tplStyle.sidebarAccent, borderColor: `${tplStyle.sidebarAccent}55` }}
               className={`font-bold tracking-wider ${tBase} border-b pb-2 uppercase`}
