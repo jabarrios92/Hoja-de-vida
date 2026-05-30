@@ -1593,8 +1593,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         }}
         className={`mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none border border-slate-200/60 ${
           forcePrintLayout 
-            ? 'grid grid-cols-[32%_68%] !rounded-none shadow-xl border border-slate-200' 
-            : 'grid grid-cols-1 md:grid-cols-[32%_68%]'
+            ? 'grid grid-cols-[33%_67%] !rounded-none shadow-xl border border-slate-200' 
+            : 'grid grid-cols-1 md:grid-cols-[33%_67%]'
         }`}
       >
         {/* LEFT COLUMN: Sidebar (Thematic background) */}
