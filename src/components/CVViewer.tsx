@@ -1578,7 +1578,6 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
      LAYOUT VARIANT 1: 'jorge' (THE SIDEBAR COLUMN LAYOUT)
      ========================================================================= */
   if (activeLayout === 'jorge') {
-    const itemCircleOffset = '-left-[32px] top-[6.5px]';
     return (
       <motion.div
         id="cv-print-area"
@@ -1792,18 +1791,15 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                   <motion.div
                     key={job.id}
                     variants={itemVariants}
-                    className="relative"
+                    className="relative group/exp"
                   >
-                    {/* Connector Dot */}
                     <span 
-                      style={{ borderColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
-                      className={`absolute ${itemCircleOffset} w-4 h-4 rounded-full border-2 bg-white flex items-center justify-center shadow-md transition-colors duration-200`}
-                    >
-                      <span 
-                        style={{ backgroundColor: isCurrent ? tplStyle.primary : '#cbd5e1' }}
-                        className="w-1.5 h-1.5 rounded-full transition-colors duration-200"
-                      ></span>
-                    </span>
+                      style={{ 
+                        backgroundColor: isCurrent ? tplStyle.primary : '#94a3b8',
+                        boxShadow: isCurrent ? `0 0 0 4px ${tplStyle.primary}33` : '0 0 0 4px white'
+                      }}
+                      className="absolute -left-[30px] top-[7px] w-[10px] h-[10px] rounded-full transition-transform duration-300 group-hover/exp:scale-125"
+                    ></span>
 
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-1 mb-2">
                       <div>
@@ -1918,8 +1914,8 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                         {edu.achievements[lang].map((achievement, aIdx) => (
                           <div
                             key={aIdx}
-                            style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
-                            className={`border-l-2 ${blockPadding} ${tBody} text-slate-650 rounded-r-md flex items-start gap-1.5`}
+                            style={{ backgroundColor: `${tplStyle.primaryBg}80` }}
+                            className={`${blockPadding} ${tBody} text-slate-650 rounded-md flex items-start gap-1.5`}
                           >
                             <CheckCircle2 className="shrink-0 mt-0.5" style={{ color: tplStyle.primary, width: 'calc(0.875rem * var(--section-scale, 1))', height: 'calc(0.875rem * var(--section-scale, 1))' }} />
                             <p>
