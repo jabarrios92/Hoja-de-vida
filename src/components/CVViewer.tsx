@@ -1593,15 +1593,15 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
         }}
         className={`mx-auto bg-white shadow-2xl overflow-visible print:shadow-none print:rounded-none border border-slate-200/60 ${
           forcePrintLayout 
-            ? 'grid grid-cols-[33%_67%] !rounded-none shadow-xl border border-slate-200' 
-            : 'grid grid-cols-1 md:grid-cols-[33%_67%]'
+            ? 'grid grid-cols-[35%_65%] !rounded-none shadow-xl border border-slate-200' 
+            : 'grid grid-cols-1 md:grid-cols-[35%_65%]'
         }`}
       >
         {/* LEFT COLUMN: Sidebar (Thematic background) */}
         <div 
           id="cv-sidebar" 
           style={{ backgroundColor: tplStyle.sidebarBg, color: tplStyle.sidebarText }}
-          className={`${paddingSidebar} flex flex-col ${gapSidebar} h-full`}
+          className={`${paddingSidebar} flex flex-col ${gapSidebar} h-full relative transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl hover:z-10`}
         >
           {/* Avatar rendering from shared helper with 10% size decrease */}
           {renderAvatar(
