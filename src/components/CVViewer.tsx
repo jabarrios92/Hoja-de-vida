@@ -1872,7 +1872,7 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
               <h2>{lang === 'es' ? 'Formación Académica' : 'Academic Education'}</h2>
             </div>
 
-            <div className={`relative border-l-2 border-slate-200 ml-2.5 pl-5 flex flex-col gap-3.5 mt-2`}>
+            <div className={`relative border-l-2 border-slate-200 ml-2.5 pl-5 flex flex-col gap-2 mt-2`}>
               {[...educacion].sort((a, b) => {
                 const getYear = (str: string) => {
                   if (!str) return 0;
@@ -1914,19 +1914,19 @@ export default function CVViewer({ data, onChange, lang, onAvatarChange, forcePr
                     </div>
 
                     {edu.achievements && edu.achievements[lang] && edu.achievements[lang].length > 0 && (
-                      <div className="flex flex-col gap-1 mt-1.5 pl-1 border-l-2 border-transparent">
+                      <div className="flex flex-col gap-1.5 mt-1">
                         {edu.achievements[lang].map((achievement, aIdx) => (
                           <div
                             key={aIdx}
-                            className="relative text-slate-600 flex items-start pl-3"
+                            style={{ borderColor: tplStyle.primary, backgroundColor: `${tplStyle.primaryBg}80` }}
+                            className={`border-l-2 ${blockPadding} ${tBody} text-slate-650 rounded-r-md flex items-start gap-1.5`}
                           >
-                            <span 
-                              style={{ backgroundColor: tplStyle.primary }}
-                              className="absolute left-0 top-[6px] w-[3px] h-[3px] rounded-full shrink-0 opacity-50"
-                            ></span>
-                            <p className={`${tSmall} leading-relaxed italic`}>
-                              <strong className="text-slate-800 font-bold not-italic">{lang === 'es' ? 'Logro' : 'Achievement'}: </strong>
-                              {achievement}
+                            <CheckCircle2 className="shrink-0 mt-0.5" style={{ color: tplStyle.primary, width: 'calc(0.875rem * var(--section-scale, 1))', height: 'calc(0.875rem * var(--section-scale, 1))' }} />
+                            <p>
+                              <strong className="text-slate-950 font-bold">
+                                {lang === 'es' ? 'Logro' : 'Achievement'}:
+                              </strong>{' '}
+                              <FormattedText text={achievement} />
                             </p>
                           </div>
                         ))}
